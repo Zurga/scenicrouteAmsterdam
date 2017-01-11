@@ -45,3 +45,6 @@ There are some routeplanners created specifically for motorcyclists but these ar
 
 The minimum viable product should be able to generate routes for the user with a maximum of 8 POI's, due to the google maps constraint. It should be able to generate a route for the user, preview it to the user and generate a map with the route drawn onto it. The map should be able to show information about a POI when the user clicks on it.
 
+
+## Screens the application will use
+![](doc/screens.png)
