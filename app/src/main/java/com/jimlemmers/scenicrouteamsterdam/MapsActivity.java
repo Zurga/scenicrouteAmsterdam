@@ -1,10 +1,15 @@
 package com.jimlemmers.scenicrouteamsterdam;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -14,12 +19,8 @@ import android.widget.Button;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -29,13 +30,19 @@ import org.json.JSONObject;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener {
+        GoogleMap.OnInfoWindowClickListener,
+        ActivityCompat.OnRequestPermissionsResultCallback {
 
     private GoogleMap mMap;
     private Route route;
     private boolean cycling;
     private boolean preview;
     private WebView mWebView;
+
+    // Location related variables.
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private boolean mPermissionDenied = false;
+
     private String testRouteJSON = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822}," +
             " {'lat': 52.3559067, 'lng': 4.9549596}," +
             " {'lat': 52.3562829, 'lng': 4.9545162}," +
@@ -91,12 +98,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Add a marker in Sydney and move the camera
-        //LatLng sydney = new LatLng(-34, 151);
-
-        //
-        //;
         try {
             route = new Route(new JSONObject(testRouteJSON));
             drawRoute(route);
@@ -105,18 +106,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         mMap.setOnInfoWindowClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
-
+        enableMyLocation();
     }
 
     public void acceptRoute(View view){
-        Intent intent = new Intent(this, MapsActivity.class);
-        //intent.putExtra("Route", route);
-        intent.putExtra("preview", false);
-        this.preview = false;
+        toggleMapButtons();
+        //TODO start the navigation part and do other stuff.
+    }
+
+    public void toggleMapButtons() {
         Button startRoute = (Button) findViewById(R.id.start_route);
         Button regenerateRoute = (Button) findViewById(R.id.regenerate_route);
-        startRoute.setVisibility(View.INVISIBLE);
-        regenerateRoute.setVisibility(View.INVISIBLE);
+        if (this.preview) {
+            startRoute.setVisibility(View.INVISIBLE);
+            regenerateRoute.setVisibility(View.INVISIBLE);
+            this.preview = false;
+        }
+        else {
+            startRoute.setVisibility(View.VISIBLE);
+            regenerateRoute.setVisibility(View.VISIBLE);
+            this.preview = true;
+        }
     }
 
     public JSONObject getRoute(Location from, Location to, Boolean cycling){
@@ -208,9 +218,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     } else {
                         finish();
                     }
+                    /*
+                    if (! this.preview) {
+                        toggleMapButtons();
+                    }
+                    */
                     return true;
             }
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    private void enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Permission to access the location is missing.
+            PermissionUtils.requestPermission(this, LOCATION_PERMISSION_REQUEST_CODE,
+                    Manifest.permission.ACCESS_FINE_LOCATION, true);
+        } else if (mMap != null) {
+            // Access to the location has been granted to the app.
+            mMap.setMyLocationEnabled(true);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
+            return;
+        }
+
+        if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Enable the my location layer if the permission has been granted.
+            enableMyLocation();
+        } else {
+            // Display the missing permission error dialog when the fragments resume.
+            mPermissionDenied = true;
+        }
     }
 }
