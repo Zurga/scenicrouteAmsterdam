@@ -1,5 +1,21 @@
 <resources>
     <string name="app_name">Scenic Route Amsterdam</string>
     <string name="title_activity_maps">Map</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">Scenic Route Amsterdam</string>
+    <string name="location_permission_denied">This application requires the permission to access your location.\\nPlease enable this in the settings.</string>
+    <string name="permission_required_toast">Location permission is required for this application.</string>
+    <string name="permission_rationale_location">Access to your location is required to help direct you through Amsterdam and notify you when you are near an interesting place.</string>
+    <!-- Error strings -->
+    <string name="not_connected">GoogleApiClient no yet connected. Try again.</string>
+    <string name="geofence_not_available">Geofence service is not available now</string>
+    <string name="geofence_too_many_geofences">Your app has registered too many geofences</string>
+    <string name="geofence_too_many_pending_intents">
+        You have provided too many PendingIntents to the addGeofences() call
+    </string>
+    <string name="unknown_geofence_error">
+        Unknown error: the Geofence service is not available now
+    </string>
+    <string name="geofence_transition_invalid_type">
+        Geofence transition error: invalid transition type %1$d
+    </string>
 </resources>
