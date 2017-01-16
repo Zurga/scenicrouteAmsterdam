@@ -13,47 +13,14 @@
     tools:context="com.jimlemmers.scenicrouteamsterdam.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:id="@+id/from"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="174dp"
-        android:hint="From..."
-        android:inputType="textPostalAddress" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="textPostalAddress"
-        android:ems="10"
-        android:id="@+id/to"
-        android:layout_centerVertical="true"
-        android:layout_alignLeft="@+id/from"
-        android:layout_alignStart="@+id/from"
-        android:hint="To..." />
-
-    <Switch
-        android:text="Cycling"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/transport_mode"
-        android:layout_below="@+id/to"
-        android:layout_alignLeft="@+id/to"
-        android:layout_alignStart="@+id/to"
-        android:layout_marginLeft="37dp"
-        android:layout_marginStart="37dp" />
-
     <Button
         android:text="Show me a route!"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/walking_text"
+        android:id="@+id/preview_route_button"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
-        android:id="@+id/preview_route_button" />
+        android:layout_marginBottom="60dp" />
 
     <TextView
         android:text="Walking"
@@ -61,8 +28,63 @@
         android:layout_height="wrap_content"
         android:id="@+id/walking_text"
         tools:text="Walking"
-        android:layout_alignBaseline="@+id/transport_mode"
-        android:layout_alignBottom="@+id/transport_mode"
-        android:layout_toRightOf="@+id/transport_mode"
-        android:layout_toEndOf="@+id/transport_mode" />
+        android:layout_marginBottom="64dp"
+        android:layout_alignBottom="@+id/preview_route_button"
+        android:layout_alignRight="@+id/preview_route_button"
+        android:layout_alignEnd="@+id/preview_route_button" />
+
+    <Switch
+        android:text="Cycling"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/transport_mode"
+        android:layout_alignBaseline="@+id/walking_text"
+        android:layout_alignBottom="@+id/walking_text"
+        android:layout_toLeftOf="@+id/walking_text"
+        android:layout_toStartOf="@+id/walking_text" />
+
+    <fragment
+        android:id="@+id/place_autocomplete_fragment_from"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+        android:layout_marginBottom="30dp"
+        android:layout_above="@+id/transport_mode"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <fragment
+        android:id="@+id/place_autocomplete_fragment_to"
+        android:layout_height="wrap_content"
+        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+        android:layout_marginBottom="12dp"
+        android:layout_width="match_parent"
+        android:layout_above="@+id/textView2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:text="From:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="26dp"
+        android:id="@+id/textView"
+        android:textSize="30sp"
+        android:layout_alignBottom="@+id/place_autocomplete_fragment_to"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="60dp"
+        android:layout_marginStart="60dp" />
+
+    <TextView
+        android:text="To:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView2"
+        android:textSize="30sp"
+        android:layout_marginBottom="15dp"
+        android:layout_above="@+id/place_autocomplete_fragment_from"
+        android:layout_alignLeft="@+id/textView"
+        android:layout_alignStart="@+id/textView" />
+
 </RelativeLayout>
