@@ -1,17 +1,28 @@
 package com.jimlemmers.scenicrouteamsterdam;
 
 import android.content.Intent;
-import android.location.Location;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+
+public class MainActivity extends AppCompatActivity implements
+        GoogleApiClient.OnConnectionFailedListener{
+    private static final String TAG = "Mainactivity";
+    private GoogleApiClient mGoogleApiClient;
+    private String[] fromTo = {};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,27 +32,65 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         //TODO add address autocompletion to the text fields.
+        mGoogleApiClient = new GoogleApiClient
+                .Builder(this)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
+                .enableAutoManage(this, this)
+                .build();
+
+        addAutocompleteListeners();
+
         Button previewButton = (Button) findViewById(R.id.preview_route_button);
         previewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EditText from = (EditText) findViewById(R.id.from);
-                EditText to = (EditText) findViewById(R.id.to);
-                //if (from.getText().toString() != "" & to.getText().toString() != "") {
-                    // TODO get all the routing from the backend
-                    String test_from = "52.356077,4.9534857";
-                    String test_to = "52.3578326,4.8743141";
+                if (fromTo.length == 2) {
                     Intent intent = new Intent(getBaseContext(), MapsActivity.class);
-                    intent.putExtra("from", test_from);
-                    intent.putExtra("to", test_to);
+                    intent.putExtra("from", fromTo[0]);
+                    intent.putExtra("to", fromTo[1]);
                     intent.putExtra("preview", true);
                     startActivity(intent);
-                //}
+                }
+                else {
+                    Toast errorToast = Toast.makeText(getApplicationContext(),
+                            "Please enter a start and end location",
+                            Toast.LENGTH_SHORT);
+                    errorToast.show();
+                }
             }
         });
     }
-    public void createLocationFromAddress(String address){
-        //Location createLocationFromAdress(String address){
-        //TODO add all the code necessary.
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    private void addAutocompleteListeners() {
+        int[] address_fields = {R.id.place_autocomplete_fragment_from,
+                R.id.place_autocomplete_fragment_to};
+
+        for (int i=0; i < address_fields.length; i++) {
+            final int idx = i;
+            PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                    getFragmentManager().findFragmentById(address_fields[i]);
+
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
+            {
+                @Override
+                public void onPlaceSelected(Place place) {
+                    // TODO: Get info about the selected place.
+                    Log.i(TAG, "Place: " + place.getName());
+                    fromTo[idx] = place.getLatLng().toString();
+                }
+
+                @Override
+                public void onError(Status status) {
+                    // TODO: Handle the error.
+                    Log.i(TAG, "An error occurred: " + status);
+                }
+            });
+        }
     }
 }
