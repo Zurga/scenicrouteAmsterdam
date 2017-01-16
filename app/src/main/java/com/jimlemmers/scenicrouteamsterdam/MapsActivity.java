@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -16,6 +17,13 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -28,41 +36,35 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener,
-        ActivityCompat.OnRequestPermissionsResultCallback {
+        ActivityCompat.OnRequestPermissionsResultCallback,
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
+        ResultCallback<Status>{
 
+    private String TAG = "MapsActivity";
     private GoogleMap mMap;
     private Route route;
     private boolean cycling;
     private boolean preview;
-    private WebView mWebView;
+    private GoogleApiClient mGoogleApiClient;
+    private ArrayList<Geofence> mGeofenceList = new ArrayList<>();
+    private Route test_route;
 
-    // Location related variables.
+    // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean mPermissionDenied = false;
 
-    private String testRouteJSON = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822}," +
-            " {'lat': 52.3559067, 'lng': 4.9549596}," +
-            " {'lat': 52.3562829, 'lng': 4.9545162}," +
-            " {'lat': 52.3544275, 'lng': 4.951395}," +
-            " {'lat': 52.3443541, 'lng': 4.9345173}," +
-            " {'lat': 52.3475559, 'lng': 4.9293173}," +
-            " {'lat': 52.34595909999999, 'lng': 4.921158399999999}," +
-            " {'lat': 52.3478944, 'lng': 4.919024299999999}," +
-            " {'lat': 52.360085, 'lng': 4.9088033}," +
-            " {'lat': 52.3611022, 'lng': 4.908108599999999}," +
-            " {'lat': 52.36228879999999, 'lng': 4.9074203}," +
-            " {'lat': 52.3662128, 'lng': 4.905046899999999}," +
-            " {'lat': 52.3675905, 'lng': 4.904230099999999}," +
-            " {'lat': 52.3683752, 'lng': 4.9040911}," +
-            " {'lat': 52.3695367, 'lng': 4.9012271}," +
-            " {'lat': 52.3720978, 'lng': 4.9004373}," +
-            " {'lat': 52.3721442, 'lng': 4.8994889}," +
-            " {'lat': 52.3699287, 'lng': 4.897421}," +
-            " {'lat': 52.3702281, 'lng': 4.8958461}," +
-            " {'lat': 52.3704123, 'lng': 4.8952648}]}";
+    private GeofencingRequest getGeofencingRequest() {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+        builder.addGeofences(mGeofenceList);
+        return builder.build();
+    }
+    private String testRouteJSON = Constants.TEST_ROUTE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,30 +76,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         Intent intent = getIntent();
-        preview = intent.getExtras().getBoolean("preview");
-        Log.d("Maps Activity", String.valueOf(preview));
-
-        if (!preview) {
-            Button startRoute = (Button) findViewById(R.id.start_route);
-            Button regenerateRoute = (Button) findViewById(R.id.regenerate_route);
-            startRoute.setVisibility(View.INVISIBLE);
-            regenerateRoute.setVisibility(View.INVISIBLE);
-        }
-        mWebView = new WebView(this);
+        String from = intent.getExtras().getString("from");
+        String to = intent.getExtras().getString("to");
+        cycling = intent.getExtras().getBoolean("cycling");
+        test_route = new Route(from, to, cycling);
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        //TODO remove the testing stuff.
         try {
             route = new Route(new JSONObject(testRouteJSON));
             drawRoute(route);
@@ -107,6 +95,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnInfoWindowClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
         enableMyLocation();
+        getGeofencingRequest();
+    }
+
+    /**
+     * Builds a GoogleApiClient. Uses the {@code #addApi} method to request the LocationServices API.
+     */
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
     }
 
     public void acceptRoute(View view){
@@ -129,40 +129,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public JSONObject getRoute(Location from, Location to, Boolean cycling){
-        // TODO add the serer side stuff.
-        String test_json = "";
-        return new JSONObject();
-    }
-
-    public void getUserLocation(){ //Location getUserLocation(){
-        //TODO make sure that the location is returned
-    }
-
-    /*
-     * I got this from here: https://developers.google.com/maps/documentation/android-api/current-places-tutorial
-
-    private void getDeviceLocation() {
-    /*
-     * Before getting the device location, you must check location
-     * permission, as described earlier in the tutorial. Then:
-     * Get the best and most recent location of the device, which may be
-     * null in rare cases when a location is not available.
-     * Also request regular updates about the device location.
-
-        if (mLocationPermissionGranted) {
-            mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
-                    mLocationRequest, this);
-        }
-    }
-        */
-
-    public void drawRoute(Route route){
-        if ( mMap == null){
+    public void drawRoute(Route route) {
+        if (mMap == null) {
             return;
         }
-        if (route.points.size() < 2){
+        if (route.points.size() < 2) {
             return;
         }
         PolylineOptions options = new PolylineOptions();
@@ -171,17 +142,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         options.width(5);
         options.visible(true);
 
-        for (int i=0; i < route.points.size(); i++){
+        for (int i = 0; i < route.points.size(); i++) {
             POI point = (POI) route.points.get(i);
             options.add(point.location);
             Marker marker = mMap.addMarker(new MarkerOptions()
                     .position(point.location)
-                    //.alpha(0.5f)
-                    //.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker))
                     .title("Test marker" + String.valueOf(i)));
             marker.setTag(point);
+
+            if (point.name != "") {
+                // Create a Geofence around the POI
+                createGeofence(point);
+            }
         }
         mMap.addPolyline(options);
+    }
+
+    public void createGeofence(POI point) {
+        mGeofenceList.add(new Geofence.Builder()
+                .setRequestId(point.name)
+                .setCircularRegion(
+                        point.location.latitude,
+                        point.location.longitude,
+                        Constants.GEOFENCE_RADIUS)
+                .setExpirationDuration(Constants.GEOFENCE_TIMEOUT)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                        Geofence.GEOFENCE_TRANSITION_EXIT)
+                .build());
     }
 
     @Override
@@ -190,16 +177,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.d("Mapsactivity", "clicked a marker");
     }
 
-    public void viewPOI(POI poi){
+    public void viewPOI(POI poi) {
+        Intent intent = new Intent(this, InformationActivity.class);
         if (poi.uri != "") {
-            mWebView.loadUrl(poi.uri);
+            intent.putExtra("url", poi.uri);
         }
         else {
             String HTML = poi.generateHTML();
             Log.d("Maps", HTML);
-            mWebView.loadData(HTML, "text/html", null);
+            intent.putExtra("HTML", HTML);
         }
-        setContentView(mWebView);
+        startActivity(intent);
     }
 
     /*
@@ -207,7 +195,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * http://stackoverflow.com/questions/6077141/how-to-go-back-to-previous-page-if-back-button-is-pressed-in-webview#6077173
      * It allows users to go back to the MapsActivity when pressing the back button.
      * If this is not implemented, the user will be thrown back to the MainActivity.
-     */
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -222,13 +210,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (! this.preview) {
                         toggleMapButtons();
                     }
-                    */
+
                     return true;
             }
         }
         return super.onKeyDown(keyCode, event);
     }
-
+    */
     private void enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -257,4 +245,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mPermissionDenied = true;
         }
     }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.i(TAG, "Connected to the Google API client.");
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i(TAG, "The connection was suspended with the server");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.i(TAG, "Connection failed: this is because of;" + connectionResult.getErrorMessage());
+    }
+
+    /**
+     * Runs when the result of calling addGeofences() and removeGeofences() becomes available.
+     * Either method can complete successfully or with an error.
+     *
+     * Since this activity implements the {@link ResultCallback} interface, we are required to
+     * define this method.
+     *
+     * @param status The Status returned through a PendingIntent when addGeofences() or
+     *               removeGeofences() get called.
+     */
+    public void onResult(Status status) {
+        if (status.isSuccess()) {
+            Log.i(TAG, "Added all the geofences for the user");
+
+        } else {
+            // Get the status code for the error and log it using a user-friendly message.
+            String errorMessage = GeofenceErrorMessages.getErrorString(this,
+                    status.getStatusCode());
+            Log.e(TAG, errorMessage);
+        }
+    }
+
 }
