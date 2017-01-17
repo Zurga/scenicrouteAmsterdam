@@ -17,12 +17,14 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 
 public class MainActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener{
     private static final String TAG = "Mainactivity";
     private GoogleApiClient mGoogleApiClient;
-    private String[] fromTo = {};
+    private String[] fromTo = {"", ""};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements
         previewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (fromTo.length == 2) {
+                if (fromTo[0] != "" & fromTo[1] != "") {
                     Intent intent = new Intent(getBaseContext(), MapsActivity.class);
                     intent.putExtra("from", fromTo[0]);
                     intent.putExtra("to", fromTo[1]);
@@ -75,6 +77,10 @@ public class MainActivity extends AppCompatActivity implements
             final int idx = i;
             PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
                     getFragmentManager().findFragmentById(address_fields[i]);
+            autocompleteFragment.setBoundsBias(new LatLngBounds(
+                    new LatLng(52.35679, 4.90952),
+                    new LatLng(52.40472, 4.75811)
+                    ));
 
             autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
             {
