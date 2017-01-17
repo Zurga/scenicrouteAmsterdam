@@ -4,15 +4,10 @@ package com.jimlemmers.scenicrouteamsterdam;
  * Created by jim on 1/13/17.
  */
 public final class Constants {
-    public static final int SUCCESS_RESULT = 0;
-    public static final int FAILURE_RESULT = 1;
-    public static final String PACKAGE_NAME =
-            "com.jimlemmers.scenicrouteamsterdam";
+    public static final String PACKAGE_NAME = "com.jimlemmers.scenicrouteamsterdam";
     public static final String RECEIVER = PACKAGE_NAME + ".RECEIVER";
-    public static final String RESULT_DATA_KEY = PACKAGE_NAME +
-            ".RESULT_DATA_KEY";
-    public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME +
-            ".LOCATION_DATA_EXTRA";
+    public static final String RESULT_DATA_KEY = PACKAGE_NAME + ".RESULT_DATA_KEY";
+    public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
     public static final long GEOFENCE_TIMEOUT = 1000l;
     public static final int GEOFENCE_RADIUS = 10;
     public static final String SERVER_URL = "http://jimlemmers.com/api/scenicroute/";
@@ -21,7 +16,7 @@ public final class Constants {
             " {'lat': 52.3562829, 'lng': 4.9545162}," +
             " {'lat': 52.3544275, 'lng': 4.951395}," +
             " {'lat': 52.3443541, 'lng': 4.9345173}," +
-            " {'lat': 52.3475559, 'lng': 4.9293173}," +
+            " {'lat': 52.3475559, 'lng': 4.9293173, 'name': 'Test '}," +
             " {'lat': 52.34595909999999, 'lng': 4.921158399999999}," +
             " {'lat': 52.3478944, 'lng': 4.919024299999999}," +
             " {'lat': 52.360085, 'lng': 4.9088033}," +
