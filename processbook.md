@@ -1,0 +1,8 @@
+- Jan 9: Project proposals and othec stuff.
+- Jan 11: Added all the design documents.
+- Jan 12: Created the project prototype, added a lot of TODOs
+- Jan 13: Added the location stuff from the android samples, and the Route, POI base classes. Decided not to create another MapsActivity when a user accepts the route, but to just hide the buttons on the map.
+- Jan 14: Added the Contstants class and the Geofencing stuff for the POI's. Also added the Place autocompletion for the from and to addresses.
+- Jan 15: The Route class now extends the AsyncTask class so that all the server stuff is handled in this class. This seperates the concerns further. Also added a seperate Activity for displaying the information from a POI.
+- Jan 16: Not a lot done today, mostly bugfixes.
+- Jan 17:
