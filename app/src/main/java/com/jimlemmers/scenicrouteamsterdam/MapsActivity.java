@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -12,9 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.Button;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -28,6 +25,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -78,8 +76,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Intent intent = getIntent();
         String from = intent.getExtras().getString("from");
         String to = intent.getExtras().getString("to");
-        cycling = intent.getExtras().getBoolean("cycling");
-        test_route = new Route(from, to, cycling);
+        cycling = intent.getExtras().getBoolean("cycling", true);
+        //test_route = new Route(from, to, cycling);
     }
 
     @Override
@@ -95,7 +93,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnInfoWindowClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
         enableMyLocation();
-        getGeofencingRequest();
+        if (mGeofenceList.size() > 0) {
+            getGeofencingRequest();
+        }
     }
 
     /**
@@ -145,13 +145,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         for (int i = 0; i < route.points.size(); i++) {
             POI point = (POI) route.points.get(i);
             options.add(point.location);
-            Marker marker = mMap.addMarker(new MarkerOptions()
-                    .position(point.location)
-                    .title("Test marker" + String.valueOf(i)));
-            marker.setTag(point);
-
-            if (point.name != "") {
-                // Create a Geofence around the POI
+            if (point.uri != null | point.name != "") {
+                Marker marker = mMap.addMarker(new MarkerOptions()
+                        .position(point.location)
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.poi_marker))
+                        .anchor(0.5f, 0.5f)
+                        .title("Test marker" + String.valueOf(i)));
+                        //TODO set the name of the POI in the information-box.
+                marker.setTag(point);
                 createGeofence(point);
             }
         }
@@ -174,7 +175,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onInfoWindowClick(Marker marker) {
         viewPOI((POI) marker.getTag());
-        Log.d("Mapsactivity", "clicked a marker");
+        Log.d(TAG, "clicked a marker");
     }
 
     public void viewPOI(POI poi) {
@@ -184,39 +185,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         else {
             String HTML = poi.generateHTML();
-            Log.d("Maps", HTML);
+            Log.d(TAG, HTML);
             intent.putExtra("HTML", HTML);
         }
         startActivity(intent);
     }
 
-    /*
-     * This code was taken from this stackoverflow post:
-     * http://stackoverflow.com/questions/6077141/how-to-go-back-to-previous-page-if-back-button-is-pressed-in-webview#6077173
-     * It allows users to go back to the MapsActivity when pressing the back button.
-     * If this is not implemented, the user will be thrown back to the MainActivity.
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_BACK:
-                    if (mWebView.canGoBack()) {
-                        mWebView.goBack();
-                    } else {
-                        finish();
-                    }
-                    /*
-                    if (! this.preview) {
-                        toggleMapButtons();
-                    }
-
-                    return true;
-            }
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-    */
     private void enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -274,7 +248,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onResult(Status status) {
         if (status.isSuccess()) {
             Log.i(TAG, "Added all the geofences for the user");
-
         } else {
             // Get the status code for the error and log it using a user-friendly message.
             String errorMessage = GeofenceErrorMessages.getErrorString(this,
@@ -282,5 +255,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.e(TAG, errorMessage);
         }
     }
-
 }
