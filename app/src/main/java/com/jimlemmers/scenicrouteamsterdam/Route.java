@@ -1,10 +1,7 @@
 package com.jimlemmers.scenicrouteamsterdam;
 
 import android.os.AsyncTask;
-import android.os.Parcel;
-import android.os.Parcelable;
-
-import com.google.android.gms.maps.model.LatLng;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,6 +28,7 @@ public class Route extends AsyncTask{
     public Boolean cycling;
     public ArrayList<Object> points = new ArrayList<>();
     private URL server_url;
+    private String TAG = "Route";
 
     public Route(String to, String from, Boolean cycling){
         try {
@@ -41,6 +39,7 @@ public class Route extends AsyncTask{
         if (to != "" & from != ""){
             this.to = to;
             this.from = from;
+            this.cycling = cycling;
         }
         this.execute();
     }
@@ -52,8 +51,7 @@ public class Route extends AsyncTask{
             if (pointsJSON != null) {
                 for (int i=0; i < pointsJSON.length(); i++){
                     JSONObject pointJSON = (JSONObject) pointsJSON.get(i);
-                    POI point = new POI(pointJSON.getString("lat"), pointJSON.getString("lng"),
-                            "","","","","");
+                    POI point = new POI(pointJSON);
                     points.add(point);
                 }
             }
@@ -65,26 +63,30 @@ public class Route extends AsyncTask{
 
     @Override
     protected void onPostExecute(Object o) {
-        String jsonString = o.toString();
-        try {
-            JSONObject routeJSON = new JSONObject(jsonString);
-            JSONArray pointsJSON = routeJSON.getJSONArray("route");
-            if (pointsJSON != null) {
-                for (int i=0; i < pointsJSON.length(); i++){
-                    JSONObject pointJSON = (JSONObject) pointsJSON.get(i);
-                    POI point = new POI(pointJSON.getString("lat"), pointJSON.getString("lng"),
-                            "","","","","");
-                    points.add(point);
+        if (o != null) {
+            String jsonString = o.toString();
+            try {
+                JSONObject routeJSON = new JSONObject(jsonString);
+                JSONArray pointsJSON = routeJSON.getJSONArray("route");
+                if (pointsJSON != null) {
+                    for (int i = 0; i < pointsJSON.length(); i++) {
+                        JSONObject pointJSON = (JSONObject) pointsJSON.get(i);
+                        POI point = new POI(pointJSON);
+                        /*
+                        POI point = new POI(pointJSON.getString("lat"), pointJSON.getString("lng"),
+                                pointJSON.getString("name"), "", "", "", "");
+                        */
+                        points.add(point);
+                    }
                 }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        }
-        catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 
     /*
-    * Taken from here:https://developer.android.com/training/basics/network-ops/connecting.html
+     * Taken from here:https://developer.android.com/training/basics/network-ops/connecting.html
      */
     @Override
     protected Object doInBackground(Object[] params) {
@@ -92,7 +94,7 @@ public class Route extends AsyncTask{
         HttpsURLConnection connection = null;
         String result = null;
         try {
-            server_url = new URL("http://jimlemmers.com/scenicroute");
+            server_url = new URL("https://jimlemmers.com/scenicroute");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -111,6 +113,7 @@ public class Route extends AsyncTask{
             connection.setRequestProperty("from", from);
             connection.setRequestProperty("cycling", cycling.toString());
             // Open communications link (network traffic occurs here).
+            Log.d(TAG, connection.toString());
             connection.connect();
             int responseCode = connection.getResponseCode();
             if (responseCode != HttpsURLConnection.HTTP_OK) {
