@@ -8,6 +8,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -44,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements
         addAutocompleteListeners();
 
         Button previewButton = (Button) findViewById(R.id.preview_route_button);
+        final Switch transportSwitch = (Switch) findViewById(R.id.transport_mode);
+
         previewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements
                     intent.putExtra("from", fromTo[0]);
                     intent.putExtra("to", fromTo[1]);
                     intent.putExtra("preview", true);
+                    intent.putExtra("cycling", transportSwitch.isChecked());
                     startActivity(intent);
                 }
                 else {
@@ -82,8 +86,7 @@ public class MainActivity extends AppCompatActivity implements
                     new LatLng(52.40472, 4.75811)
                     ));
 
-            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
-            {
+            autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
                 @Override
                 public void onPlaceSelected(Place place) {
                     // TODO: Get info about the selected place.
