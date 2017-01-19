@@ -4,8 +4,12 @@ import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Created by jim on 1/12/17.
+ * This class holds all the information about a Point of interest
  */
 
 public class POI {
@@ -16,14 +20,23 @@ public class POI {
     String picture;
     LatLng location;
 
-    public POI(String lat, String lon, String name,
-               String description, String uri, String information, String picture) {
-        this.description = description;
-        this.uri = uri;
-        this.information = information;
-        this.name = name;
-        this.picture = picture;
-        this.location = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
+    public POI(JSONObject pointJSON){
+        try {
+            String lat = pointJSON.has("lat") ? pointJSON.getString("lat") : null;
+            String lon = pointJSON.has("lng") ? pointJSON.getString("lng") : null;
+            if (lat != null & lon != null) {
+                this.location = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
+            } else {
+                this.location = null;
+            }
+            this.name = pointJSON.has("name") ? pointJSON.getString("name") : null;
+            this.description = pointJSON.has("description") ? pointJSON.getString("description") : null;
+            this.uri = pointJSON.has("uri") ? pointJSON.getString("uri") : null;
+            this.information = pointJSON.has("information") ? pointJSON.getString("information") : null;
+            this.picture = pointJSON.has("picture") ? pointJSON.getString("picture") : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public String generateHTML(){
