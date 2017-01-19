@@ -10,8 +10,8 @@ public final class Constants {
     public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
     public static final long GEOFENCE_TIMEOUT = 1000l;
     public static final int GEOFENCE_RADIUS = 10;
-    public static final String SERVER_URL = "http://jimlemmers.com/api/scenicroute/";
-    public static final String TEST_ROUTE = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822}," +
+    public static final String SERVER_URL = "http://163.172.221.210/api/scenicroute/";
+    public static final String TEST_ROUTE = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822, 'name': 'SP'}," +
             " {'lat': 52.3559067, 'lng': 4.9549596}," +
             " {'lat': 52.3562829, 'lng': 4.9545162}," +
             " {'lat': 52.3544275, 'lng': 4.951395}," +
