@@ -64,19 +64,6 @@
         android:layout_alignParentStart="true" />
 
     <TextView
-        android:text="From:"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="26dp"
-        android:id="@+id/textView"
-        android:textSize="30sp"
-        android:layout_alignBottom="@+id/place_autocomplete_fragment_to"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginLeft="60dp"
-        android:layout_marginStart="60dp" />
-
-    <TextView
         android:text="To:"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -86,5 +73,18 @@
         android:layout_above="@+id/place_autocomplete_fragment_from"
         android:layout_alignLeft="@+id/textView"
         android:layout_alignStart="@+id/textView" />
+
+    <TextView
+        android:text="From:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:id="@+id/textView"
+        android:textSize="30sp"
+        android:layout_marginLeft="60dp"
+        android:layout_marginStart="60dp"
+        android:layout_above="@+id/place_autocomplete_fragment_to"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>
