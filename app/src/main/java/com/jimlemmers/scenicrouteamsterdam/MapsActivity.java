@@ -1,6 +1,7 @@
 package com.jimlemmers.scenicrouteamsterdam;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -41,7 +42,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleMap.OnInfoWindowClickListener,
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        ResultCallback<Status>{
+        ResultCallback<Status> {
 
     private String TAG = "MapsActivity";
     private GoogleMap mMap;
@@ -51,6 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private ArrayList<Geofence> mGeofenceList = new ArrayList<>();
     private Route test_route;
+    private PendingIntent mGeofencePendingIntent;
 
     // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -109,7 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
     }
 
-    public void acceptRoute(View view){
+    public void acceptRoute(View view) {
         toggleMapButtons();
         //TODO start the navigation part and do other stuff.
     }
@@ -145,7 +147,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         for (int i = 0; i < route.points.size(); i++) {
             POI point = (POI) route.points.get(i);
             options.add(point.location);
-            if (point.uri != null | point.name != "") {
+
+            if (point.uri != null | point.name != null) {
                 Marker marker = mMap.addMarker(new MarkerOptions()
                         .position(point.location)
                         .icon(BitmapDescriptorFactory.fromResource(R.mipmap.poi_marker))
@@ -180,10 +183,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void viewPOI(POI poi) {
         Intent intent = new Intent(this, InformationActivity.class);
-        if (poi.uri != "") {
+        if (poi.uri != null) {
             intent.putExtra("url", poi.uri);
-        }
-        else {
+        } else {
             String HTML = poi.generateHTML();
             Log.d(TAG, HTML);
             intent.putExtra("HTML", HTML);
@@ -254,5 +256,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     status.getStatusCode());
             Log.e(TAG, errorMessage);
         }
+    }
+
+    private PendingIntent getGeofencePendingIntent() {
+        if (mGeofencePendingIntent != null) {
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, InformationActivity.class);
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }
