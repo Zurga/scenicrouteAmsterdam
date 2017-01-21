@@ -3,15 +3,23 @@ package com.jimlemmers.scenicrouteamsterdam;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.goebl.david.Response;
+import com.goebl.david.Webb;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -27,10 +35,13 @@ public class Route extends AsyncTask{
     public String from;
     public Boolean cycling;
     public ArrayList<Object> points = new ArrayList<>();
+    public ArrayList<Object> pois = new ArrayList<>();
     private URL server_url;
     private String TAG = "Route";
+    private OnTaskCompleted mListener;
 
-    public Route(String to, String from, Boolean cycling){
+    public Route(String to, String from, Boolean cycling, OnTaskCompleted listener){
+        mListener = listener;
         try {
             server_url = new URL(Constants.SERVER_URL);
         } catch (MalformedURLException e) {
@@ -42,6 +53,7 @@ public class Route extends AsyncTask{
             this.cycling = cycling;
         }
         this.execute();
+
     }
 
     public Route(JSONObject routeJSON){
@@ -67,82 +79,54 @@ public class Route extends AsyncTask{
             String jsonString = o.toString();
             try {
                 JSONObject routeJSON = new JSONObject(jsonString);
-                JSONArray pointsJSON = routeJSON.getJSONArray("route");
-                if (pointsJSON != null) {
-                    for (int i = 0; i < pointsJSON.length(); i++) {
-                        JSONObject pointJSON = (JSONObject) pointsJSON.get(i);
-                        POI point = new POI(pointJSON);
-                        /*
-                        POI point = new POI(pointJSON.getString("lat"), pointJSON.getString("lng"),
-                                pointJSON.getString("name"), "", "", "", "");
-                        */
-                        points.add(point);
-                    }
-                }
+                points = instantiateFromJSON(routeJSON.getJSONArray("route"), "poi");
+                //pois = instantiateFromJSON(routeJSON.getJSONArray("pois"), "pois");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
+        mListener.onTaskCompleted(this);
     }
 
+    private ArrayList<Object> instantiateFromJSON(JSONArray array, String type) {
+        ArrayList<Object> resultArray = new ArrayList<>();
+        try {
+            if (array != null) {
+                for (int i = 0; i < array.length(); i++) {
+                    JSONObject pointJSON = (JSONObject) array.get(i);
+                    switch (type) {
+                        case "point": resultArray.add(new Point(pointJSON));
+                            break;
+
+                        case "poi": resultArray.add(new POI(pointJSON));
+                            break;
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return resultArray;
+    }
     /*
      * Taken from here:https://developer.android.com/training/basics/network-ops/connecting.html
      */
     @Override
     protected Object doInBackground(Object[] params) {
-        InputStream stream = null;
-        HttpsURLConnection connection = null;
-        String result = null;
-        try {
-            server_url = new URL("https://jimlemmers.com/scenicroute");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        try {
-            connection = (HttpsURLConnection) server_url.openConnection();
-            // Timeout for reading InputStream arbitrarily set to 3000ms.
-            connection.setReadTimeout(3000);
-            // Timeout for connection.connect() arbitrarily set to 3000ms.
-            connection.setConnectTimeout(3000);
-            // For this use case, set HTTP method to GET.
-            connection.setRequestMethod("GET");
-            // Already true by default but setting just in case; needs to be true since this request
-            // is carrying an input (response) body.
-            connection.setDoInput(true);
-            connection.setRequestProperty("to", to);
-            connection.setRequestProperty("from", from);
-            connection.setRequestProperty("cycling", cycling.toString());
-            // Open communications link (network traffic occurs here).
-            Log.d(TAG, connection.toString());
-            connection.connect();
-            int responseCode = connection.getResponseCode();
-            if (responseCode != HttpsURLConnection.HTTP_OK) {
-                throw new IOException("HTTP error code: " + responseCode);
-            }
-            // Retrieve the response body as an InputStream.
-            stream = connection.getInputStream();
+        Webb webb = Webb.create();
+        Response<JSONObject> response = webb
+                .post(Constants.SERVER_URL)
+                .param("to", to)
+                .param("from", from)
+                .param("cycling", cycling.toString())
+                .ensureSuccess()
+                .asJsonObject();
 
-            if (stream != null) {
-                // Converts Stream to String with max length of 500.
-                Scanner s = new Scanner(stream).useDelimiter("\\A");
-                result = s.hasNext() ? s.next() : "";
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            // Close Stream and disconnect HTTPS connection.
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-        return result;
+        JSONObject apiResult = response.getBody();
+        Log.d(TAG, apiResult.toString());
+        Log.d(TAG, to.toString());
+        Log.d(TAG, from.toString());
+        Log.d(TAG, cycling.toString());
+        return apiResult;
     }
 }
