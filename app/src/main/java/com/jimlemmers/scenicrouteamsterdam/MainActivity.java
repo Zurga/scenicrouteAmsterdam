@@ -91,7 +91,9 @@ public class MainActivity extends AppCompatActivity implements
                 public void onPlaceSelected(Place place) {
                     // TODO: Get info about the selected place.
                     Log.i(TAG, "Place: " + place.getName());
-                    fromTo[idx] = place.getLatLng().toString();
+                    LatLng location = place.getLatLng();
+                    fromTo[idx] = String.valueOf(location.latitude) + "," +
+                        String.valueOf(location.longitude);
                 }
 
                 @Override
