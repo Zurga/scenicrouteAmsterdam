@@ -12,23 +12,18 @@ import org.json.JSONObject;
  * This class holds all the information about a Point of interest
  */
 
-public class POI {
+public class POI extends Point{
     String name;
     String description;
     String uri;
     String information;
     String picture;
-    LatLng location;
+
 
     public POI(JSONObject pointJSON){
+        super(pointJSON);
+
         try {
-            String lat = pointJSON.has("lat") ? pointJSON.getString("lat") : null;
-            String lon = pointJSON.has("lng") ? pointJSON.getString("lng") : null;
-            if (lat != null & lon != null) {
-                this.location = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
-            } else {
-                this.location = null;
-            }
             this.name = pointJSON.has("name") ? pointJSON.getString("name") : null;
             this.description = pointJSON.has("description") ? pointJSON.getString("description") : null;
             this.uri = pointJSON.has("uri") ? pointJSON.getString("uri") : null;
