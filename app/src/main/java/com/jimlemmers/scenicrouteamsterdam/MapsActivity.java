@@ -37,9 +37,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener,
+        GoogleMap.OnInfoWindowClickListener, OnTaskCompleted,
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         ResultCallback<Status> {
@@ -53,6 +52,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<Geofence> mGeofenceList = new ArrayList<>();
     private Route test_route;
     private PendingIntent mGeofencePendingIntent;
+    private String from;
+    private String to;
 
     // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -66,6 +67,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
     private String testRouteJSON = Constants.TEST_ROUTE;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,22 +78,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         Intent intent = getIntent();
-        String from = intent.getExtras().getString("from");
-        String to = intent.getExtras().getString("to");
-        cycling = intent.getExtras().getBoolean("cycling", true);
-        //test_route = new Route(from, to, cycling);
+        this.from = intent.getExtras().getString("from");
+        this.to = intent.getExtras().getString("to");
+        this.cycling = intent.getExtras().getBoolean("cycling", true);
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         //TODO remove the testing stuff.
-        try {
-            route = new Route(new JSONObject(testRouteJSON));
-            drawRoute(route);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        //route = new Route(new JSONObject(testRouteJSON));
+        test_route = new Route(from, to, cycling, this);
         mMap.setOnInfoWindowClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
         enableMyLocation();
@@ -131,11 +128,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void drawRoute(Route route) {
+    public void onTaskCompleted(Route route) {
         if (mMap == null) {
             return;
         }
         if (route.points.size() < 2) {
+            Log.d(TAG, "no points on the route");
             return;
         }
         PolylineOptions options = new PolylineOptions();
@@ -145,9 +143,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         options.visible(true);
 
         for (int i = 0; i < route.points.size(); i++) {
-            POI point = (POI) route.points.get(i);
+            Point point = (Point) route.points.get(i);
             options.add(point.location);
-
+            Log.d(TAG, point.location.toString());
+            /*
             if (point.uri != null | point.name != null) {
                 Marker marker = mMap.addMarker(new MarkerOptions()
                         .position(point.location)
@@ -157,7 +156,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         //TODO set the name of the POI in the information-box.
                 marker.setTag(point);
                 createGeofence(point);
-            }
+            }*/
         }
         mMap.addPolyline(options);
     }
