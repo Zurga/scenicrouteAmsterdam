@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.goebl.david.Response;
 import com.goebl.david.Webb;
+import com.google.firebase.database.Exclude;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,35 +31,58 @@ import javax.net.ssl.HttpsURLConnection;
  * The reason to have this class extend AsyncTask is to have as few boilerplate code as possible in
  * the MapsActivity and keep the route creation in one class.
  */
-public class Route extends AsyncTask{
+
+public class Route { //extends AsyncTask<String, String, String>{
     public String to;
     public String from;
+    public String toName;
+    public String fromName;
     public Boolean cycling;
-    public ArrayList<Object> points = new ArrayList<>();
-    public ArrayList<Object> pois = new ArrayList<>();
-    private URL server_url;
-    private String TAG = "Route";
-    private OnTaskCompleted mListener;
+    public String pointsArrayString;
+    public ArrayList<Point> points = new ArrayList<>();
+    private ArrayList<POI> pois = new ArrayList<>();
+    public int timesUsed = 0;
 
-    public Route(String to, String from, Boolean cycling, OnTaskCompleted listener){
-        mListener = listener;
+
+    public Route() {}
+
+    public Route(String toInput, String toString, String fromInput, String fromString,
+                 Boolean cyclingInput, String json){
+        if (toInput != "" & fromInput != ""){
+            to = toInput;
+            toName = toString;
+            from = fromInput;
+            fromName = fromString;
+            cycling = cyclingInput;
+        }
         try {
-            server_url = new URL(Constants.SERVER_URL);
-        } catch (MalformedURLException e) {
+            JSONObject routeJSON = new JSONObject(json);
+            JSONArray pointsArray = routeJSON.getJSONArray("route");
+            pointsArrayString = pointsArray.toString();
+            //JSONArray poisArray = routeJSON.getJSONArray("pois");
+
+            for (int i = 0; i < pointsArray.length(); i++) {
+                JSONObject pointJSON = (JSONObject) pointsArray.get(i);
+                points.add(new Point(pointJSON.toString()));
+            }
+                /*
+                for (int i = 0; i < poisArray.length(); i++) {
+                    JSONObject poiJSON = (JSONObject) poisArray.get(i);
+
+                    pois.add(new POI(poiJSON.toString()));
+                }
+                */
+        } catch (JSONException e) {
             e.printStackTrace();
         }
-        if (to != "" & from != ""){
-            this.to = to;
-            this.from = from;
-            this.cycling = cycling;
-        }
-        this.execute();
-
+        //this.execute();
     }
 
+    /*
     public Route(JSONObject routeJSON){
         //TODO remove this when the server is ready.
         try {
+            SONObject routeJSON
             JSONArray pointsJSON = routeJSON.getJSONArray("route");
             if (pointsJSON != null) {
                 for (int i=0; i < pointsJSON.length(); i++){
@@ -71,62 +95,7 @@ public class Route extends AsyncTask{
         catch (JSONException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
-    @Override
-    protected void onPostExecute(Object o) {
-        if (o != null) {
-            String jsonString = o.toString();
-            try {
-                JSONObject routeJSON = new JSONObject(jsonString);
-                points = instantiateFromJSON(routeJSON.getJSONArray("route"), "poi");
-                //pois = instantiateFromJSON(routeJSON.getJSONArray("pois"), "pois");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        mListener.onTaskCompleted(this);
-    }
 
-    private ArrayList<Object> instantiateFromJSON(JSONArray array, String type) {
-        ArrayList<Object> resultArray = new ArrayList<>();
-        try {
-            if (array != null) {
-                for (int i = 0; i < array.length(); i++) {
-                    JSONObject pointJSON = (JSONObject) array.get(i);
-                    switch (type) {
-                        case "point": resultArray.add(new Point(pointJSON));
-                            break;
-
-                        case "poi": resultArray.add(new POI(pointJSON));
-                            break;
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return resultArray;
-    }
-    /*
-     * Taken from here:https://developer.android.com/training/basics/network-ops/connecting.html
-     */
-    @Override
-    protected Object doInBackground(Object[] params) {
-        Webb webb = Webb.create();
-        Response<JSONObject> response = webb
-                .post(Constants.SERVER_URL)
-                .param("to", to)
-                .param("from", from)
-                .param("cycling", cycling.toString())
-                .ensureSuccess()
-                .asJsonObject();
-
-        JSONObject apiResult = response.getBody();
-        Log.d(TAG, apiResult.toString());
-        Log.d(TAG, to.toString());
-        Log.d(TAG, from.toString());
-        Log.d(TAG, cycling.toString());
-        return apiResult;
-    }
 }
