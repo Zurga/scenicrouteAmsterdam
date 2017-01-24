@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <item android:title="Log in"
+        android:id="@+id/login_menu_item" />
+    <item android:title="Create account"
+        android:id="@+id/create_account_menu_item" />
+    <item android:title="My routes"
+        android:id="@+id/user_routes_menu_item" />
+    <item android:title="Sign out"
+        android:id="@+id/sign_out_menu_item" />
 </menu>
