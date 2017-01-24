@@ -11,7 +11,8 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.jimlemmers.scenicrouteamsterdam.MainActivity"
-    tools:showIn="@layout/activity_main">
+    tools:showIn="@layout/activity_main"
+    android:background="#99FFFFFF">
 
     <Button
         android:text="Show me a route!"
@@ -72,7 +73,8 @@
         android:layout_marginBottom="15dp"
         android:layout_above="@+id/place_autocomplete_fragment_from"
         android:layout_alignLeft="@+id/textView"
-        android:layout_alignStart="@+id/textView" />
+        android:layout_alignStart="@+id/textView"
+        android:textColor="?android:attr/textColorPrimary"/>
 
     <TextView
         android:text="From:"
@@ -85,6 +87,14 @@
         android:layout_marginStart="60dp"
         android:layout_above="@+id/place_autocomplete_fragment_to"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:textColor="?android:attr/textColorPrimary" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/walking_text"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/my_routes" />
 
 </RelativeLayout>
