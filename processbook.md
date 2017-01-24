@@ -33,3 +33,9 @@
 - Mostly worked on getting the communication with the server working. I am now using the Webb package to do requests because doing them in pure Java is just horrible... This has resulted in my app working almost as planned and will continue later on to add more features.
 - The communication with the server works.
 
+# Jan 23:
+
+- Spent my day on integrating firebase authentication and storing of routes in firebase. Also created a menu for the user to log in, create an account, view saved routes and sign out.
+- Created a view for the saved routes together with an adapter, this still has to be tested.
+- I can't store a route yet do to a key error in my Route class.
+- Added a function to store the routes in the mapsActivity.
