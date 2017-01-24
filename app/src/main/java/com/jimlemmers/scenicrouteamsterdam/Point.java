@@ -10,10 +10,13 @@ import org.json.JSONObject;
  */
 
 public class Point {
-    LatLng location;
+    public LatLng location;
 
-    public Point(JSONObject pointJSON) {
+    public Point() {}
+
+    public Point(String pointJSONString) {
         try {
+            JSONObject pointJSON = new JSONObject(pointJSONString);
             String lat = pointJSON.has("lat") ? pointJSON.getString("lat") : null;
             String lon = pointJSON.has("lng") ? pointJSON.getString("lng") : null;
             if (lat != null & lon != null) {
