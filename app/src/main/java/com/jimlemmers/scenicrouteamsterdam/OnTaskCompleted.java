@@ -5,5 +5,5 @@ package com.jimlemmers.scenicrouteamsterdam;
  */
 
 public interface OnTaskCompleted {
-    void onTaskCompleted(Route route);
+    void onTaskCompleted(RouteGetter routeGetter);
 }
