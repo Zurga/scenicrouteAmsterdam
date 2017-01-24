@@ -13,17 +13,19 @@ import org.json.JSONObject;
  */
 
 public class POI extends Point{
-    String name;
-    String description;
-    String uri;
-    String information;
-    String picture;
+    public String name;
+    public String description;
+    public String uri;
+    public String information;
+    public String picture;
 
+    public POI() {}
 
-    public POI(JSONObject pointJSON){
-        super(pointJSON);
+    public POI(String pointJSONString){
+        super(pointJSONString);
 
         try {
+            JSONObject pointJSON = new JSONObject(pointJSONString);
             this.name = pointJSON.has("name") ? pointJSON.getString("name") : null;
             this.description = pointJSON.has("description") ? pointJSON.getString("description") : null;
             this.uri = pointJSON.has("uri") ? pointJSON.getString("uri") : null;
