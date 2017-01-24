@@ -13,4 +13,8 @@
     tools:context="com.jimlemmers.scenicrouteamsterdam.MyRoutesActivity"
     tools:showIn="@layout/activity_my_routes">
 
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/saved_routes_list" />
 </RelativeLayout>
