@@ -26,16 +26,21 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
-import org.json.JSONException;
+
 import org.json.JSONObject;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener, OnTaskCompleted,
@@ -45,15 +50,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private String TAG = "MapsActivity";
     private GoogleMap mMap;
+    private RouteGetter routeGetter;
     private Route route;
     private boolean cycling;
     private boolean preview;
     private GoogleApiClient mGoogleApiClient;
     private ArrayList<Geofence> mGeofenceList = new ArrayList<>();
-    private Route test_route;
     private PendingIntent mGeofencePendingIntent;
     private String from;
     private String to;
+    private String fromName;
+    private String toName;
 
     // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -65,6 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         builder.addGeofences(mGeofenceList);
         return builder.build();
     }
+
     private String testRouteJSON = Constants.TEST_ROUTE;
 
 
@@ -79,8 +87,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Intent intent = getIntent();
         this.from = intent.getExtras().getString("from");
+        this.fromName = intent.getExtras().getString("fromName");
         this.to = intent.getExtras().getString("to");
+        this.toName = intent.getExtras().getString("toName");
         this.cycling = intent.getExtras().getBoolean("cycling", true);
+        this.routeGetter = new RouteGetter(from, fromName, to, toName, cycling, this);
     }
 
     @Override
@@ -88,7 +99,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         //TODO remove the testing stuff.
         //route = new Route(new JSONObject(testRouteJSON));
-        test_route = new Route(from, to, cycling, this);
         mMap.setOnInfoWindowClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
         enableMyLocation();
@@ -120,22 +130,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             startRoute.setVisibility(View.INVISIBLE);
             regenerateRoute.setVisibility(View.INVISIBLE);
             this.preview = false;
-        }
-        else {
+        } else {
             startRoute.setVisibility(View.VISIBLE);
             regenerateRoute.setVisibility(View.VISIBLE);
             this.preview = true;
         }
     }
 
-    public void onTaskCompleted(Route route) {
+    public void onTaskCompleted(RouteGetter routeGetter) {
         if (mMap == null) {
             return;
         }
+        route = routeGetter.route;
         if (route.points.size() < 2) {
             Log.d(TAG, "no points on the route");
             return;
         }
+
         PolylineOptions options = new PolylineOptions();
 
         options.color(Color.parseColor("#CC2222DD"));
@@ -239,7 +250,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /**
      * Runs when the result of calling addGeofences() and removeGeofences() becomes available.
      * Either method can complete successfully or with an error.
-     *
+     * <p>
      * Since this activity implements the {@link ResultCallback} interface, we are required to
      * define this method.
      *
@@ -263,5 +274,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         Intent intent = new Intent(this, InformationActivity.class);
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public void saveRoute(View view) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("routes").child(user.getUid());
+
+        myRef.push().setValue(route);
     }
 }
