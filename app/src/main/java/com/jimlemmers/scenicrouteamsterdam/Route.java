@@ -1,29 +1,12 @@
 package com.jimlemmers.scenicrouteamsterdam;
 
-import android.os.AsyncTask;
-import android.util.Log;
-
-import com.goebl.david.Response;
-import com.goebl.david.Webb;
 import com.google.firebase.database.Exclude;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
-import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Created by jim on 1/12/17.
@@ -38,7 +21,9 @@ public class Route { //extends AsyncTask<String, String, String>{
     public String toName;
     public String fromName;
     public Boolean cycling;
-    public String pointsArrayString;
+    @Exclude
+    private String pointsArrayString;
+    public String key;
     public ArrayList<Point> points = new ArrayList<>();
     private ArrayList<POI> pois = new ArrayList<>();
     public int timesUsed = 0;
