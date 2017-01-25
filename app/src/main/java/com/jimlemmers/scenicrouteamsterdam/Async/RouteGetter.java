@@ -10,7 +10,7 @@ import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
 import com.jimlemmers.scenicrouteamsterdam.Classes.POI;
 import com.jimlemmers.scenicrouteamsterdam.Classes.Point;
 import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
-import com.jimlemmers.scenicrouteamsterdam.OnTaskCompleted;
+import com.jimlemmers.scenicrouteamsterdam.Interfaces.OnTaskCompleted;
 
 import org.json.JSONArray;
 import org.json.JSONException;

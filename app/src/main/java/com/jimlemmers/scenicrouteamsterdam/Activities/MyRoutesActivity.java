@@ -15,8 +15,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.jimlemmers.scenicrouteamsterdam.R;
-import com.jimlemmers.scenicrouteamsterdam.Route;
-import com.jimlemmers.scenicrouteamsterdam.SavedRoutesAdapter;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
+import com.jimlemmers.scenicrouteamsterdam.Adapters.SavedRoutesAdapter;
 
 import java.util.ArrayList;
 

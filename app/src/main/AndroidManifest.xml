@@ -29,7 +29,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".Activities.MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -39,18 +39,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MapsActivity"
+            android:name=".Activities.MapsActivity"
             android:label="@string/title_activity_maps">
             MapsActivity
         </activity>
-        <activity android:name=".InformationActivity">
+        <activity android:name=".Activities.InformationActivity">
             InformationActivity
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name=".Activities.SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity
-            android:name=".MyRoutesActivity"
+            android:name=".Activities.MyRoutesActivity"
             android:label="@string/title_activity_my_routes"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>

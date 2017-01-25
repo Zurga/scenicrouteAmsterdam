@@ -32,10 +32,10 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
-import com.jimlemmers.scenicrouteamsterdam.MostUsedAdapter;
+import com.jimlemmers.scenicrouteamsterdam.Adapters.MostUsedAdapter;
 import com.jimlemmers.scenicrouteamsterdam.R;
-import com.jimlemmers.scenicrouteamsterdam.ReadMostUsed;
-import com.jimlemmers.scenicrouteamsterdam.Route;
+import com.jimlemmers.scenicrouteamsterdam.Async.ReadMostUsed;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
 
 import android.view.MenuItem;
 
