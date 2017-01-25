@@ -12,6 +12,7 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -30,17 +31,24 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
+
 import android.view.MenuItem;
+
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity implements
         OnConnectionFailedListener {
     private static final String TAG = "Mainactivity";
     private GoogleApiClient mGoogleApiClient;
     private String[] fromTo = {"", ""};
-    private String[] fromToNames = {"", ""};
+    private String[] fromToNames = {"Test", "Tester"};
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private Dialog dialog;
+    private ArrayList<Route> mostUsed;
+    private MostUsedAdapter mostUsedAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +56,11 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
+        mostUsed = new ArrayList<>();
+        mostUsedAdapter = new MostUsedAdapter(this, mostUsed);
+        new ReadMostUsed(mostUsedAdapter);
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -62,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
                 }
-                // ...
             }
         };
 
@@ -82,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements
         previewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //if (fromTo[0] != "" & fromTo[1] != "") {
+                if (fromTo[0] != "" & fromTo[1] != "") {
                     Intent intent = new Intent(getBaseContext(), MapsActivity.class);
                     intent.putExtra("from", fromTo[0]);
                     intent.putExtra("fromName", fromToNames[0]);
@@ -91,14 +103,16 @@ public class MainActivity extends AppCompatActivity implements
                     intent.putExtra("preview", true);
                     intent.putExtra("cycling", transportSwitch.isChecked());
                     startActivity(intent);
-                //} else {
+                } else {
                     Toast errorToast = Toast.makeText(getApplicationContext(),
                             "Please enter a start and end location",
                             Toast.LENGTH_SHORT);
                     errorToast.show();
-                //}
+                }
             }
         });
+        ListView listView = (ListView) findViewById(R.id.my_routes);
+        listView.setAdapter(mostUsedAdapter);
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -116,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements
                 Intent intent = new Intent(this, MyRoutesActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.sign_out_menu_item:
+                mAuth.signOut();
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -178,9 +194,6 @@ public class MainActivity extends AppCompatActivity implements
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
 
-                        // If sign in fails, display a message to the user. If sign in succeeds
-                        // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
                         if (!task.isSuccessful()) {
                             Toast.makeText(MainActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
@@ -201,9 +214,6 @@ public class MainActivity extends AppCompatActivity implements
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "signInWithEmail:onComplete:" + task.isSuccessful());
 
-                        // If sign in fails, display a message to the user. If sign in succeeds
-                        // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
                         if (!task.isSuccessful()) {
                             Log.w(TAG, "signInWithEmail", task.getException());
                             Toast.makeText(MainActivity.this, "Authentication failed.",
