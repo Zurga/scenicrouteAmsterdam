@@ -1,10 +1,12 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Activities;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
+
+import com.jimlemmers.scenicrouteamsterdam.R;
 
 public class InformationActivity extends AppCompatActivity {
     private WebView mWebView;

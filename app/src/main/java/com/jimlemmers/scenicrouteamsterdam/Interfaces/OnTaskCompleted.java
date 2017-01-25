@@ -1,4 +1,6 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Interfaces;
+
+import com.jimlemmers.scenicrouteamsterdam.Async.RouteGetter;
 
 /**
  * Created by jim on 1/21/17.

@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Classes;
 
 /**
  * Copyright 2014 Google Inc. All Rights Reserved.
@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.res.Resources;
 
 import com.google.android.gms.location.GeofenceStatusCodes;
+import com.jimlemmers.scenicrouteamsterdam.R;
 
 /**
  * Geofence error codes mapped to error messages.

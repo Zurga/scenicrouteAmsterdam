@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Classes;
 
 /**
  * Created by jim on 1/24/17.

@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Classes;
 
 
 /**

@@ -1,6 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
-
-import com.google.android.gms.maps.model.LatLng;
+package com.jimlemmers.scenicrouteamsterdam.Classes;
 
 import org.json.JSONException;
 import org.json.JSONObject;

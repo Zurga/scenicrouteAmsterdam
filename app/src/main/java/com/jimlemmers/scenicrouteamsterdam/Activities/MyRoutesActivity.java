@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Activities;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -14,6 +14,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.jimlemmers.scenicrouteamsterdam.R;
+import com.jimlemmers.scenicrouteamsterdam.Route;
+import com.jimlemmers.scenicrouteamsterdam.SavedRoutesAdapter;
 
 import java.util.ArrayList;
 

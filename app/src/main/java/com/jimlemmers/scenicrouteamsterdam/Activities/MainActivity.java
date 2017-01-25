@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Activities;
 
 import android.app.Dialog;
 import android.content.Intent;
@@ -32,6 +32,10 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
+import com.jimlemmers.scenicrouteamsterdam.MostUsedAdapter;
+import com.jimlemmers.scenicrouteamsterdam.R;
+import com.jimlemmers.scenicrouteamsterdam.ReadMostUsed;
+import com.jimlemmers.scenicrouteamsterdam.Route;
 
 import android.view.MenuItem;
 

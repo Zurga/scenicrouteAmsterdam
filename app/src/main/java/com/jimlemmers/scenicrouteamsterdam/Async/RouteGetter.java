@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Async;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -6,6 +6,11 @@ import android.util.Log;
 import com.goebl.david.Response;
 import com.goebl.david.Webb;
 import com.google.firebase.database.Exclude;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
+import com.jimlemmers.scenicrouteamsterdam.Classes.POI;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Point;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
+import com.jimlemmers.scenicrouteamsterdam.OnTaskCompleted;
 
 import org.json.JSONArray;
 import org.json.JSONException;

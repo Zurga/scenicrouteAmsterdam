@@ -1,4 +1,4 @@
-package com.jimlemmers.scenicrouteamsterdam;
+package com.jimlemmers.scenicrouteamsterdam.Utils;
 
 /*
  * Copyright (C) 2015 The Android Open Source Project
@@ -26,8 +26,9 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
+
+import com.jimlemmers.scenicrouteamsterdam.R;
 
 /**
  * Utility class for access to runtime permissions.
