@@ -1,6 +1,7 @@
 package com.jimlemmers.scenicrouteamsterdam;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,8 +28,8 @@ public class SavedRoutesAdapter extends ArrayAdapter {
         }
 
         convertView.setTag(position);
-        TextView fromTextView = (TextView) convertView.findViewById(R.id.saved_route_from);
-        TextView toTextView = (TextView) convertView.findViewById(R.id.saved_route_to);
+        TextView fromTextView = (TextView) convertView.findViewById(R.id.route_item_from);
+        TextView toTextView = (TextView) convertView.findViewById(R.id.route_item_to);
 
         fromTextView.setText(route.fromName);
         toTextView.setText(route.toName);
@@ -38,6 +39,13 @@ public class SavedRoutesAdapter extends ArrayAdapter {
             public boolean onLongClick(View v) {
                 int position = (Integer) v.getTag();
                 Route route = (Route) getItem(position);
+                Intent intent = new Intent(getContext(), MapsActivity.class);
+                intent.putExtra("from", route.from);
+                intent.putExtra("fromName", route.fromName);
+                intent.putExtra("to", route.to);
+                intent.putExtra("toName", route.toName);
+                intent.putExtra("preview", true);
+                intent.putExtra("cycling", route.cycling);
                 return false;
             }
         });
