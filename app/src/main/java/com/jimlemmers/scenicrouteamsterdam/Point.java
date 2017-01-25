@@ -10,7 +10,7 @@ import org.json.JSONObject;
  */
 
 public class Point {
-    public LatLng location;
+    public MyLatLng location;
 
     public Point() {}
 
@@ -20,7 +20,7 @@ public class Point {
             String lat = pointJSON.has("lat") ? pointJSON.getString("lat") : null;
             String lon = pointJSON.has("lng") ? pointJSON.getString("lng") : null;
             if (lat != null & lon != null) {
-                this.location = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
+                this.location = new MyLatLng(Double.parseDouble(lat), Double.parseDouble(lon));
             } else {
                 this.location = null;
             }
