@@ -51,7 +51,7 @@ public class RouteGetter extends AsyncTask<String, String, String> {
     @Exclude
     protected void onPostExecute(String result) {
         if (result != null) {
-            route = new Route(to, toName, from, fromName, cycling, result);
+            route = new Route(from, fromName, to, toName, cycling, result);
         }
         mListener.onTaskCompleted(this);
     }
