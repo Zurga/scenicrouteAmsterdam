@@ -34,13 +34,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-
-import org.json.JSONObject;
-
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener, OnTaskCompleted,
@@ -61,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String to;
     private String fromName;
     private String toName;
+    private String routeKey;
 
     // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -72,9 +69,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         builder.addGeofences(mGeofenceList);
         return builder.build();
     }
-
-    private String testRouteJSON = Constants.TEST_ROUTE;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +85,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.to = intent.getExtras().getString("to");
         this.toName = intent.getExtras().getString("toName");
         this.cycling = intent.getExtras().getBoolean("cycling", true);
+        this.routeKey = intent.getExtras().getString("key");
         this.routeGetter = new RouteGetter(from, fromName, to, toName, cycling, this);
+
+        Button saveButton = (Button) findViewById(R.id.save_route);
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveRoute("routes");
+            }
+        });
     }
 
     @Override
@@ -120,7 +123,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void acceptRoute(View view) {
         toggleMapButtons();
+        if (route.key != null) {
+            updateRoute();
+        } else {
+            saveRoute("most_used");
+        }
         //TODO start the navigation part and do other stuff.
+    }
+
+    public void updateRoute(){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("most_used").child(user.getUid());
+        route.timesUsed += 1;
+        myRef.child(route.key).setValue(route);
     }
 
     public void toggleMapButtons() {
@@ -142,6 +158,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         route = routeGetter.route;
+        if (routeKey != null) {
+            route.key = routeKey;
+        }
         if (route.points.size() < 2) {
             Log.d(TAG, "no points on the route");
             return;
@@ -155,7 +174,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         for (int i = 0; i < route.points.size(); i++) {
             Point point = (Point) route.points.get(i);
-            options.add(point.location);
+            LatLng location = new LatLng(point.location.latitude,
+                    point.location.longitude);
+            options.add(location);
             Log.d(TAG, point.location.toString());
             /*
             if (point.uri != null | point.name != null) {
@@ -276,11 +297,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    public void saveRoute(View view) {
+    public void saveRoute(String reference) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("routes").child(user.getUid());
+        DatabaseReference myRef = database.getReference(reference).child(user.getUid());
 
-        myRef.push().setValue(route);
+        String key = myRef.push().getKey();
+        Map<String, Object> child = new HashMap<>();
+        route.key = key;
+        child.put("/" + key, route);
+        myRef.updateChildren(child);
     }
 }
