@@ -4,12 +4,12 @@ package com.jimlemmers.scenicrouteamsterdam;
  * Created by jim on 1/24/17.
  */
 
-public class myLatLng {
+public class MyLatLng {
     public Double latitude;
     public Double longitude;
-    public myLatLng() {}
+    public MyLatLng() {}
 
-    public myLatLng(Double lat, Double longi) {
+    public MyLatLng(Double lat, Double longi) {
         this.latitude = lat;
         this.longitude = longi;
     }
