@@ -16,6 +16,10 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ActionViewTarget;
+import com.github.amlcurran.showcaseview.targets.Target;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
@@ -33,10 +37,11 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.jimlemmers.scenicrouteamsterdam.Adapters.MostUsedAdapter;
+import com.jimlemmers.scenicrouteamsterdam.Adapters.RouteAdapter;
+import com.jimlemmers.scenicrouteamsterdam.Interfaces.RouteItemSelected;
 import com.jimlemmers.scenicrouteamsterdam.R;
-import com.jimlemmers.scenicrouteamsterdam.Async.ReadMostUsed;
 import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
 
 import android.view.MenuItem;
@@ -45,7 +50,7 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity implements
-        OnConnectionFailedListener {
+        OnConnectionFailedListener, RouteItemSelected {
     private static final String TAG = "Mainactivity";
     private GoogleApiClient mGoogleApiClient;
     private String[] fromTo = {"", ""};
@@ -53,14 +58,25 @@ public class MainActivity extends AppCompatActivity implements
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private Dialog dialog;
-    private ArrayList<Route> mostUsed;
-    private MostUsedAdapter mostUsedAdapter;
+    private RouteAdapter routeAdapter;
+    private ArrayList<String> itemsSelected = new ArrayList<>();
+    private Toolbar toolbar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mAuth = FirebaseAuth.getInstance();
+        /*
+        Target target = new ViewTarget(R.id.me, this);
+        new ShowcaseView.Builder(this)
+                .setTarget(target)
+                .setContentTitle("ShowcaseView")
+                .setContentText("This is highlighting the Home button")
+                .hideOnTouchOutside()
+                .build();
+                */
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -77,13 +93,8 @@ public class MainActivity extends AppCompatActivity implements
         };
         signInAnonymously();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-
-        mostUsed = new ArrayList<>();
-        mostUsedAdapter = new MostUsedAdapter(this, mostUsed);
-        new ReadMostUsed(mostUsedAdapter);
 
         //TODO add address autocompletion to the text fields.
         mGoogleApiClient = new GoogleApiClient
@@ -94,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements
                 .build();
 
         addAutocompleteListeners();
+        //setMostUsedAdapter();
 
         Button previewButton = (Button) findViewById(R.id.preview_route_button);
         final Switch transportSwitch = (Switch) findViewById(R.id.transport_mode);
@@ -118,10 +130,27 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         });
-
-        ListView listView = (ListView) findViewById(R.id.my_routes);
-        listView.setAdapter(mostUsedAdapter);
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mAuth.addAuthStateListener(mAuthListener);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        DatabaseReference myRef = FirebaseDatabase.getInstance().getReference()
+                .child("routes").child(user.getUid());
+        routeAdapter = new RouteAdapter(this, new ArrayList<Route>(), myRef, this);
+        ListView listView = (ListView) findViewById(R.id.my_routes);
+        listView.setAdapter(routeAdapter);
+    }
+
+    /*
+    private void setMostUsedAdapter() {
+        routeAdapter = new RouteAdapter(this, new ArrayList<Route>(), this);
+        new ReadMostUsed(routeAdapter);
+
+    }*/
 
     public boolean onOptionsItemSelected(MenuItem item) {
         dialog = new Dialog(this);
@@ -140,6 +169,10 @@ public class MainActivity extends AppCompatActivity implements
                 return true;
             case R.id.sign_out_menu_item:
                 mAuth.signOut();
+                return true;
+            case R.id.menu_delete:
+                deleteFromMostUsed();
+                setSupportActionBar(toolbar);
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -256,6 +289,19 @@ public class MainActivity extends AppCompatActivity implements
                     }
                 });
     }
+
+    public void deleteFromMostUsed(){
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            DatabaseReference myRef = FirebaseDatabase.getInstance().getReference()
+                .child("routes").child(user.getUid());
+            for (String key: itemsSelected) {
+                myRef.child(key).removeValue();
+            }
+        }
+        itemsSelected.clear();
+    }
+
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
@@ -273,6 +319,7 @@ public class MainActivity extends AppCompatActivity implements
         MenuItem logIn = menu.findItem(R.id.login_menu_item);
         MenuItem createAccount = menu.findItem(R.id.create_account_menu_item);
         MenuItem signOut = menu.findItem(R.id.sign_out_menu_item);
+        MenuItem delete_most_used = menu.findItem(R.id.menu_delete);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user != null && !user.isAnonymous()) {
@@ -284,6 +331,9 @@ public class MainActivity extends AppCompatActivity implements
             logIn.setVisible(true);
             signOut.setVisible(false);
             createAccount.setVisible(true);
+        }
+        if (itemsSelected.size() > 0) {
+            delete_most_used.setVisible(true);
         }
         return true;
     }
@@ -321,10 +371,9 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
+    public void addItemSelected(String key) {
+        itemsSelected.add(key);
+        setSupportActionBar(toolbar);
     }
 
     @Override
