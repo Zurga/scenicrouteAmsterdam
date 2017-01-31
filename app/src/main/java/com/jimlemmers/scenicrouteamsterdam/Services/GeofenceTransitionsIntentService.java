@@ -14,7 +14,8 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
-import com.jimlemmers.scenicrouteamsterdam.Activities.MainActivity;
+import com.jimlemmers.scenicrouteamsterdam.Activities.InformationActivity;
+import com.jimlemmers.scenicrouteamsterdam.Activities.MapsActivity;
 import com.jimlemmers.scenicrouteamsterdam.Classes.GeofenceErrorMessages;
 import com.jimlemmers.scenicrouteamsterdam.R;
 
@@ -35,6 +36,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "onCreate");
         super.onCreate();
     }
 
@@ -47,6 +49,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
             Log.e(TAG, errorMessage);
             return;
         }
+        Log.d(TAG, "On HandleIntent");
 
         // Get the transition type.
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
@@ -95,13 +98,13 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
     private void sendNotification(String notificationDetails) {
         // Create an explicit content Intent that starts the main Activity.
-        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+        Intent notificationIntent = new Intent(getApplicationContext(), InformationActivity.class);
 
         // Construct a task stack.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
         // Add the main Activity to the task stack as the parent.
-        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addParentStack(MapsActivity.class);
 
         // Push the content Intent onto the stack.
         stackBuilder.addNextIntent(notificationIntent);
