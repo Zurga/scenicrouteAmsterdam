@@ -6,6 +6,7 @@ import android.util.Log;
 import com.goebl.david.Response;
 import com.goebl.david.Webb;
 import com.google.firebase.database.Exclude;
+
 import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
 import com.jimlemmers.scenicrouteamsterdam.Classes.POI;
 import com.jimlemmers.scenicrouteamsterdam.Classes.Point;
@@ -20,6 +21,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
+import static java.lang.Thread.sleep;
+
 /**
  * Created by jim on 1/24/17.
  */
@@ -28,15 +31,27 @@ public class RouteGetter extends AsyncTask<String, String, String> {
     private URL server_url;
     private String TAG = "Route";
     private OnTaskCompleted mListener;
-    public String to;
-    public String from;
-    public String toName;
-    public String fromName;
-    public Boolean cycling;
+    public String mTo;
+    public String mFrom;
+    public String mToName;
+    public String mFromName;
+    public Boolean mCycling;
+    public int mTimesUsed;
+    public String key;
     public Route route;
 
     public RouteGetter(String toInput, String toString, String fromInput, String fromString,
-                 Boolean cyclingInput, OnTaskCompleted listener){
+                       Boolean cyclingInput, OnTaskCompleted listener){
+       this(toInput, toString, fromInput, fromString, cyclingInput, 0, null, "", listener);
+    }
+
+    public RouteGetter(String toInput, String toString, String fromInput, String fromString,
+                       Boolean cyclingInput, String pointsJson, OnTaskCompleted listener) {
+        this(toInput, toString, fromInput, fromString, cyclingInput, 0, null, pointsJson, listener);
+    }
+    public RouteGetter(String toInput, String toString, String fromInput, String fromString,
+                       Boolean cyclingInput, int timesUsed, String key, String pointsJson,
+                       OnTaskCompleted listener) {
         mListener = listener;
         try {
             server_url = new URL(Constants.SERVER_URL);
@@ -44,21 +59,27 @@ public class RouteGetter extends AsyncTask<String, String, String> {
             e.printStackTrace();
         }
         if (toInput != "" & fromInput != ""){
-            to = toInput;
-            toName = toString;
-            from = fromInput;
-            fromName = fromString;
-            cycling = cyclingInput;
+            mTo = toInput;
+            mToName = toString;
+            mFrom = fromInput;
+            mFromName = fromString;
+            mCycling = cyclingInput;
+            mTimesUsed = timesUsed;
+            this.key = key;
         }
-        this.execute();
+        if (pointsJson == "") {
+            this.execute();
+        } else {
+            route = new Route(mFrom, mFromName, mTo, mToName, mCycling, mTimesUsed, "", pointsJson);
+        }
     }
     @Override
     @Exclude
     protected void onPostExecute(String result) {
         if (result != null) {
-            route = new Route(from, fromName, to, toName, cycling, result);
+            route = new Route(mFrom, mFromName, mTo, mToName, mCycling, mTimesUsed, key, result);
         }
-        mListener.onTaskCompleted(this);
+        mListener.onTaskCompleted(route);
     }
 
     @Exclude
@@ -93,21 +114,18 @@ public class RouteGetter extends AsyncTask<String, String, String> {
             Webb webb = Webb.create();
             Response<JSONObject> response = webb
                     .post(Constants.SERVER_URL)
-                    .param("to", to)
-                    .param("from", from)
-                    .param("cycling", cycling.toString())
+                    .param("to", mTo)
+                    .param("from", mFrom)
+                    .param("cycling", mCycling.toString())
                     .ensureSuccess()
                     .asJsonObject();
 
             apiResult = response.getBody();
             Log.d(TAG, apiResult.toString());
-            Log.d(TAG, to.toString());
-            Log.d(TAG, from.toString());
-            Log.d(TAG, cycling.toString());
         }
         catch (Exception a) {
             try {
-                apiResult = new JSONObject(Constants.TEST_ROUTE_2);
+                apiResult = new JSONObject(Constants.TEST_ROUTE);
             }
             catch (JSONException e) {
                 e.printStackTrace();
