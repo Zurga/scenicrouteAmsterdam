@@ -1,5 +1,7 @@
 package com.jimlemmers.scenicrouteamsterdam.Classes;
 
+import android.util.Log;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -19,10 +21,12 @@ public class POI extends Point{
 
     public POI(String pointJSONString){
         super(pointJSONString);
+        Log.d("POI", pointJSONString);
+
 
         try {
             JSONObject pointJSON = new JSONObject(pointJSONString);
-            this.name = pointJSON.has("name") ? pointJSON.getString("name") : null;
+            this.name = pointJSON.has("name") ? pointJSON.getString("name") : "Point of interest";
             this.description = pointJSON.has("description") ? pointJSON.getString("description") : null;
             this.uri = pointJSON.has("uri") ? pointJSON.getString("uri") : null;
             this.information = pointJSON.has("information") ? pointJSON.getString("information") : null;
