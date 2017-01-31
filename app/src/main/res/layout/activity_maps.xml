@@ -17,6 +17,7 @@
         android:padding="10dp"
         android:layout_marginBottom="20dp"
         android:onClick="acceptRoute"
+        android:visibility="invisible"
         />
 
     <Button
@@ -28,6 +29,7 @@
         android:padding="10dp"
         android:layout_marginBottom="20dp"
         android:onClick="regenerateRoute"
+        android:visibility="invisible"
         />
     <Button
         android:id="@+id/save_route"
@@ -37,6 +39,8 @@
         android:text="Save route"
         android:padding="10dp"
         android:layout_marginBottom="20dp"
-        android:onClick="saveRoute"/>
+        android:onClick="saveRoute"
+        android:visibility="invisible"
+        />
 
 </fragment>
