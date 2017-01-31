@@ -28,7 +28,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
@@ -58,14 +60,6 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-
-        mostUsed = new ArrayList<>();
-        mostUsedAdapter = new MostUsedAdapter(this, mostUsed);
-        new ReadMostUsed(mostUsedAdapter);
-
         mAuth = FirebaseAuth.getInstance();
 
         mAuthListener = new FirebaseAuth.AuthStateListener() {
@@ -81,6 +75,15 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         };
+        signInAnonymously();
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
+        mostUsed = new ArrayList<>();
+        mostUsedAdapter = new MostUsedAdapter(this, mostUsed);
+        new ReadMostUsed(mostUsedAdapter);
 
         //TODO add address autocompletion to the text fields.
         mGoogleApiClient = new GoogleApiClient
@@ -115,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements
                 }
             }
         });
+
         ListView listView = (ListView) findViewById(R.id.my_routes);
         listView.setAdapter(mostUsedAdapter);
     }
@@ -147,15 +151,17 @@ public class MainActivity extends AppCompatActivity implements
         final EditText email = (EditText) dialog.findViewById(R.id.txtUsername);
         final EditText password = (EditText) dialog.findViewById(R.id.txtPassword);
 
+
         if (action == "login") {
             dialog.setTitle("Log in with your email and password.");
             buttonOk.setText("Login");
             buttonOk.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (email.getText().toString().trim().length() > 0 &&
-                            password.getText().toString().trim().length() > 0) {
-                        logUserIn(email.getText().toString(), password.getText().toString());
+                    final String emailText = email.getText().toString().trim();
+                    final String passwordText = password.getText().toString().trim();
+                    if (emailText.length() > 0 && passwordText.length() > 0) {
+                        logUserIn(emailText, passwordText);
                     } else {
                         Toast.makeText(getApplicationContext(),
                                 "Please enter email and password", Toast.LENGTH_LONG).show();
@@ -169,9 +175,10 @@ public class MainActivity extends AppCompatActivity implements
             buttonOk.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (email.getText().toString().trim().length() > 0 &&
-                            password.getText().toString().trim().length() > 0) {
-                        createAccount(email.getText().toString(), password.getText().toString());
+                    final String emailText = email.getText().toString().trim();
+                    final String passwordText = password.getText().toString().trim();
+                    if (emailText.length() > 0 && passwordText.length() > 0) {
+                        createAccount(emailText, passwordText);
                     } else {
                         Toast.makeText(getApplicationContext(),
                                 "Please enter email and password", Toast.LENGTH_LONG).show();
@@ -191,8 +198,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void createAccount(String email, String password) {
-        // Redirect to dashboard / home screen.
-        mAuth.createUserWithEmailAndPassword(email, password)
+        AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+        mAuth.getCurrentUser().linkWithCredential(credential)
                 .addOnCompleteListener(MainActivity.this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -222,11 +229,33 @@ public class MainActivity extends AppCompatActivity implements
                             Log.w(TAG, "signInWithEmail", task.getException());
                             Toast.makeText(MainActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Logged in.",
+                                    Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
                         }
                     }
                 });
     }
 
+    public void signInAnonymously(){
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        Log.d(TAG, "signInAnonymously:onComplete:" + task.isSuccessful());
+
+                        // If sign in fails, display a message to the user. If sign in succeeds
+                        // the auth state listener will be notified and logic to handle the
+                        // signed in user can be handled in the listener.
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "signInAnonymously", task.getException());
+                            Toast.makeText(MainActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
@@ -245,7 +274,8 @@ public class MainActivity extends AppCompatActivity implements
         MenuItem createAccount = menu.findItem(R.id.create_account_menu_item);
         MenuItem signOut = menu.findItem(R.id.sign_out_menu_item);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
+
+        if (user != null && !user.isAnonymous()) {
             logIn.setVisible(false);
             signOut.setVisible(true);
             createAccount.setVisible(false);
