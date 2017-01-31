@@ -65,14 +65,6 @@
         android:layout_marginRight="12dp"
         android:layout_marginEnd="12dp" />
 
-    <ListView
-        android:layout_width="match_parent"
-        android:id="@+id/my_routes"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_height="240dp" />
-
     <TextView
         android:text="From:"
         android:layout_width="wrap_content"
@@ -93,17 +85,24 @@
         android:id="@+id/preview_route_button"
         android:layout_marginTop="37dp"
         android:layout_below="@+id/place_autocomplete_fragment_from"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:elevation="0dp" />
 
     <TextView
         android:text="Most used"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/textView3"
-        android:textSize="20sp"
-        android:layout_above="@+id/my_routes"
-        android:layout_toLeftOf="@+id/transport_mode"
-        android:layout_toStartOf="@+id/transport_mode"
-        android:textColor="@color/common_google_signin_btn_text_dark_focused" />
+        android:textSize="18sp"
+        android:textColor="@color/common_google_signin_btn_text_dark_focused"
+        android:layout_below="@+id/preview_route_button" />
+
+    <ListView
+        android:layout_width="match_parent"
+        android:id="@+id/my_routes"
+        android:layout_height="240dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView3" />
 
 </RelativeLayout>
