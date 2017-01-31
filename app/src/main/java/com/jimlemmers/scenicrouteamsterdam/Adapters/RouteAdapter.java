@@ -20,7 +20,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.jimlemmers.scenicrouteamsterdam.Activities.MapsActivity;
 import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
-import com.jimlemmers.scenicrouteamsterdam.Interfaces.MostUsedItemSelected;
+import com.jimlemmers.scenicrouteamsterdam.Interfaces.RouteItemSelected;
 import com.jimlemmers.scenicrouteamsterdam.R;
 
 import java.util.ArrayList;
@@ -33,8 +33,8 @@ import java.util.List;
 
 public class RouteAdapter extends ArrayAdapter {
     private String TAG = "RouteAdapter";
-    private Context mContext;
-    private MostUsedItemSelected mListener;
+    public Context mContext;
+    private RouteItemSelected mListener;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private DatabaseReference mDatabase;
@@ -42,7 +42,7 @@ public class RouteAdapter extends ArrayAdapter {
     //private List<Route> routes = new ArrayList<>();
 
     public RouteAdapter(Context context, ArrayList<Route> routes, DatabaseReference ref,
-                        MostUsedItemSelected listener) {
+                        RouteItemSelected listener) {
         super(context, 0, routes);
         mContext = context;
         mDatabase = ref;
@@ -56,13 +56,13 @@ public class RouteAdapter extends ArrayAdapter {
             query.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-                    Log.d("Added", dataSnapshot.getValue().toString());
+                    Log.d("Added", dataSnapshot.getKey());
                     addMostUsed(dataSnapshot);
                 }
 
                 @Override
                 public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-                    Log.d("Changed", dataSnapshot.getValue().toString());
+                    Log.d("Changed", dataSnapshot.getKey());
                     updateMostUsed(dataSnapshot);
                 }
 
@@ -85,6 +85,7 @@ public class RouteAdapter extends ArrayAdapter {
     }
 
     public void addMostUsed(DataSnapshot dataSnapshot) {
+        Log.d(TAG, dataSnapshot.getValue().toString());
         Route route = dataSnapshot.getValue(Route.class);
         /*
         route.key = dataSnapshot.getKey();
@@ -93,7 +94,7 @@ public class RouteAdapter extends ArrayAdapter {
         adapter.addAll(mostUsed.values());
         */
         this.add(route);
-        Log.d("FAVOURITE", dataSnapshot.getValue().toString());
+        //Log.d("FAVOURITE", dataSnapshot.getValue().toString());
         sortItems();
         notifyDataSetChanged();
     }
@@ -103,7 +104,6 @@ public class RouteAdapter extends ArrayAdapter {
             Route route = (Route) this.getItem(i);
             if (route.key == dataSnapshot.getKey()) {
                 this.remove(route);
-                Log.d(TAG, "Keys match");
             }
         }
         addMostUsed(dataSnapshot);
