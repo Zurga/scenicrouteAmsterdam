@@ -6,11 +6,12 @@ package com.jimlemmers.scenicrouteamsterdam.Classes;
  */
 public final class Constants {
     public static final String PACKAGE_NAME = "com.jimlemmers.scenicrouteamsterdam";
+    public static final String FIREBASE_ROUTE = "routes";
     public static final String RECEIVER = PACKAGE_NAME + ".RECEIVER";
     public static final String RESULT_DATA_KEY = PACKAGE_NAME + ".RESULT_DATA_KEY";
     public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
-    public static final long GEOFENCE_TIMEOUT = 1000l;
-    public static final int GEOFENCE_RADIUS = 10;
+    public static final long GEOFENCE_TIMEOUT = 10000l;
+    public static final int GEOFENCE_RADIUS = 1000;
     public static final String SERVER_URL = "http://163.172.221.210:5000/api/scenicroute";
     public static final String TEST_ROUTE = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822, 'name': 'SP'}," +
             " {'lat': 52.3559067, 'lng': 4.9549596}," +
