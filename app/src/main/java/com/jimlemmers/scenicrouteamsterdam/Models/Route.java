@@ -15,11 +15,11 @@ import java.util.ArrayList;
  */
 
 @Parcel
-public class Route { //extends AsyncTask<String, String, String>{
-    public String to;
+public class Route {
     public String from;
-    public String toName;
+    public String to;
     public String fromName;
+    public String toName;
     public Boolean cycling;
     public String routeJSON;
     public String key;
@@ -30,7 +30,7 @@ public class Route { //extends AsyncTask<String, String, String>{
 
     public Route() {}
 
-    public Route(String toInput, String toString, String fromInput, String fromString,
+    public Route(String fromInput, String fromString, String toInput, String toString,
                  Boolean cyclingInput, int tUsed, String key, String json){
 
         try {
