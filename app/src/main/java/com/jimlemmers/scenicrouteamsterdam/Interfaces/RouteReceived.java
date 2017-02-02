@@ -7,5 +7,5 @@ import com.jimlemmers.scenicrouteamsterdam.Models.Route;
  */
 
 public interface RouteReceived {
-    void onTaskCompleted(Route route);
+    void onRouteReceived(Route route);
 }
