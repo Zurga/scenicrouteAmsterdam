@@ -1,11 +1,11 @@
 package com.jimlemmers.scenicrouteamsterdam.Interfaces;
 
-import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
+import com.jimlemmers.scenicrouteamsterdam.Models.Route;
 
 /**
  * Created by jim on 1/21/17.
  */
 
-public interface OnTaskCompleted {
+public interface RouteReceived {
     void onTaskCompleted(Route route);
 }

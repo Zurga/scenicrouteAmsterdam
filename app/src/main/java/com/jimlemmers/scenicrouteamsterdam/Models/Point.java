@@ -1,12 +1,13 @@
-package com.jimlemmers.scenicrouteamsterdam.Classes;
+package com.jimlemmers.scenicrouteamsterdam.Models;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.parceler.Parcel;
 
 /**
  * Created by jim on 1/19/17.
  */
-
+@Parcel
 public class Point {
     public MyLatLng location;
 

@@ -1,16 +1,17 @@
-package com.jimlemmers.scenicrouteamsterdam.Classes;
+package com.jimlemmers.scenicrouteamsterdam.Models;
 
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.parceler.Parcel;
 
 /**
  * Created by jim on 1/12/17.
  * This class holds all the information about a Point of interest
  */
-
-public class POI extends Point{
+@Parcel
+public class POI extends Point {
     public String name;
     public String description;
     public String uri;
@@ -38,8 +39,11 @@ public class POI extends Point{
 
     public String generateHTML(){
         // TODO generate real html for the object.
-        return "<html><h2>A name for a place</h2>" +
+        return "<html><h2>"+ name + "</h2>" +
                 "<img src='https://placeholdit.imgix.net/~text?txtsize=33&txt=350%C3%97150&w=350&h=150'/>"+
-                "<p>The description for that certain place</p></html>";
+                "<p>" + description + "</p></html>";
     }
+
+
+
 }

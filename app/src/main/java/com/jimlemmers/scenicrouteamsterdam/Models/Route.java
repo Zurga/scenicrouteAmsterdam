@@ -1,10 +1,9 @@
-package com.jimlemmers.scenicrouteamsterdam.Classes;
-
-import com.google.firebase.database.Exclude;
+package com.jimlemmers.scenicrouteamsterdam.Models;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.parceler.Parcel;
 
 import java.util.ArrayList;
 
@@ -15,6 +14,7 @@ import java.util.ArrayList;
  * the MapsActivity and keep the route creation in one class.
  */
 
+@Parcel
 public class Route { //extends AsyncTask<String, String, String>{
     public String to;
     public String from;
