@@ -83,14 +83,7 @@ public class RouteAdapter extends ArrayAdapter {
 
     public void addRoute(DataSnapshot dataSnapshot) {
         Route route = dataSnapshot.getValue(Route.class);
-        /*
-        route.key = dataSnapshot.getKey();
-        mostUsed.put(route.key, route);
-        adapter.clear();
-        adapter.addAll(mostUsed.values());
-        */
         this.add(route);
-        //Log.d("FAVOURITE", dataSnapshot.getValue().toString());
         sortItems();
         notifyDataSetChanged();
     }
@@ -109,6 +102,9 @@ public class RouteAdapter extends ArrayAdapter {
         notifyDataSetChanged();
     }
 
+    /**
+     * Sorts the items in the adapter based on timesUsed int.
+     */
     public void sortItems() {
         this.sort(new Comparator<Route>() {
             @Override
