@@ -10,10 +10,10 @@ public final class Constants {
     public static final String RECEIVER = PACKAGE_NAME + ".RECEIVER";
     public static final String RESULT_DATA_KEY = PACKAGE_NAME + ".RESULT_DATA_KEY";
     public static final String LOCATION_DATA_EXTRA = PACKAGE_NAME + ".LOCATION_DATA_EXTRA";
-    public static final long GEOFENCE_TIMEOUT = 10000l;
-    public static final int GEOFENCE_RADIUS = 1000;
+    public static final long GEOFENCE_TIMEOUT = 3000l;
+    public static final int GEOFENCE_RADIUS = 5000;
     public static final String SERVER_URL = "http://163.172.221.210:5000/api/scenicroute";
-    public static final String TEST_ROUTE = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822, 'name': 'SP'}," +
+    public static final String TEST_ROUTE = "{'route':[{'lat': 52.3556845, 'lng': 4.9545822}," +
             " {'lat': 52.3559067, 'lng': 4.9549596}," +
             " {'lat': 52.3562829, 'lng': 4.9545162}," +
             " {'lat': 52.3544275, 'lng': 4.951395}," +
@@ -32,7 +32,8 @@ public final class Constants {
             " {'lat': 52.3721442, 'lng': 4.8994889}," +
             " {'lat': 52.3699287, 'lng': 4.897421}," +
             " {'lat': 52.3702281, 'lng': 4.8958461}," +
-            " {'lat': 52.3704123, 'lng': 4.8952648}]}";
+            " {'lat': 52.3704123, 'lng': 4.8952648}]," +
+            "'pois':[{'lat': 52.3556845, 'lng': 4.9545822, 'name': 'SP'}]}";
     public static final String TEST_ROUTE_2 = "{'route':[{'lat':52.3788138,'lng':4.8991056}," +
             "{'lat':52.3788138,'lng':4.8991056}," +
             "{'lat':52.3788138,'lng':4.8991056}," +
