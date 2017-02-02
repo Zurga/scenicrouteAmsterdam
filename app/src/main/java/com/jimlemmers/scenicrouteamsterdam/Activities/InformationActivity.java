@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
 
+import com.jimlemmers.scenicrouteamsterdam.Models.POI;
 import com.jimlemmers.scenicrouteamsterdam.R;
+
+import org.parceler.Parcels;
 
 public class InformationActivity extends AppCompatActivity {
     private WebView mWebView;
@@ -20,16 +23,12 @@ public class InformationActivity extends AppCompatActivity {
         mWebView = new WebView(this);
         mWebView.getSettings().setJavaScriptEnabled(true);
         Intent intent = getIntent();
-        String url = intent.getStringExtra("url");
-        String HTML = intent.getStringExtra("HTML");
+        POI poi = Parcels.unwrap(intent.getParcelableExtra("poi"));
 
-
-        if (url != null) {
-            Log.d(TAG, url);
-            mWebView.loadUrl(url);
+        if (poi.uri != null) {
+            mWebView.loadUrl(poi.uri);
         } else {
-            Log.d(TAG, HTML);
-            mWebView.loadData(HTML, "text/html", null);
+            mWebView.loadData(poi.generateHTML(), "text/html", null);
         }
         setContentView(mWebView);
     }
