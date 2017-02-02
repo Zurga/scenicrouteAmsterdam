@@ -15,7 +15,6 @@ public class POI extends Point {
     public String name;
     public String description;
     public String uri;
-    public String information;
     public String picture;
 
     public POI() {}
@@ -30,7 +29,6 @@ public class POI extends Point {
             this.name = pointJSON.has("name") ? pointJSON.getString("name") : "Point of interest";
             this.description = pointJSON.has("description") ? pointJSON.getString("description") : null;
             this.uri = pointJSON.has("uri") ? pointJSON.getString("uri") : null;
-            this.information = pointJSON.has("information") ? pointJSON.getString("information") : null;
             this.picture = pointJSON.has("picture") ? pointJSON.getString("picture") : null;
         } catch (JSONException e) {
             e.printStackTrace();
