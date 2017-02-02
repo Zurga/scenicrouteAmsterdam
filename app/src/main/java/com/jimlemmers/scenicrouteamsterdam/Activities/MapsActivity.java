@@ -1,7 +1,6 @@
 package com.jimlemmers.scenicrouteamsterdam.Activities;
 
 import android.Manifest;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -18,10 +17,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,10 +33,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
-import com.jimlemmers.scenicrouteamsterdam.Classes.GeofenceErrorMessages;
 import com.jimlemmers.scenicrouteamsterdam.Models.POI;
-import com.jimlemmers.scenicrouteamsterdam.Services.GeofenceTransitionsIntentService;
 import com.jimlemmers.scenicrouteamsterdam.Utils.PermissionUtils;
 import com.jimlemmers.scenicrouteamsterdam.Models.Point;
 import com.jimlemmers.scenicrouteamsterdam.R;
@@ -61,16 +53,14 @@ import java.util.Map;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnInfoWindowClickListener,
         ActivityCompat.OnRequestPermissionsResultCallback,
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-        ResultCallback<Status> {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
+       {
 
     private String TAG = "MapsActivity";
     private GoogleMap mMap;
     private Route mRoute;
     private ArrayList<Route> routes = new ArrayList<>();
     private GoogleApiClient mGoogleApiClient;
-    private ArrayList<Geofence> mGeofenceList = new ArrayList<>();
-    private PendingIntent mGeofencePendingIntent;
     private Button saveRouteButton;
     private FirebaseUser user;
     private FirebaseDatabase database;
@@ -89,8 +79,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        mGeofencePendingIntent = null;
 
         buildGoogleApiClient();
         user = FirebaseAuth.getInstance().getCurrentUser();
@@ -127,19 +115,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onStop() {
         super.onStop();
-        LocationServices.GeofencingApi.removeGeofences(
-                mGoogleApiClient,
-                // This is the same pending intent that was used in addGeofences().
-                getGeofencePendingIntent()
-        ).setResultCallback(this); // Result processed in onResult().
-        mGoogleApiClient.disconnect();
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        //TODO remove the testing stuff.
-        //mRoute = new Route(new JSONObject(testRouteJSON));
+        drawRoute();
+        saveRouteButton.setVisibility(View.VISIBLE);
         mMap.setOnInfoWindowClickListener(this);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
         enableMyLocation();
@@ -213,31 +195,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .anchor(0.5f, 0.5f)
                     .snippet(poi.name)
                     .title(poi.name));
-            //TODO set the name of the POI in the information-box.
             marker.setTag(poi);
-            createGeofence(poi, i);
         }
 
         mMap.addPolyline(options);
-    }
-
-    /**
-     * Creates a geofence around a point of interest
-     * @param point The point of interest to be added.
-     * @param index The index of the POI to determine the data display in the notification.
-     */
-    public void createGeofence(POI point, int index) {
-        mGeofenceList.add(new Geofence.Builder()
-                .setRequestId(String.valueOf(index))
-                .setCircularRegion(
-                        point.location.latitude,
-                        point.location.longitude,
-                        Constants.GEOFENCE_RADIUS)
-                .setExpirationDuration(Constants.GEOFENCE_TIMEOUT)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                        Geofence.GEOFENCE_TRANSITION_EXIT)
-                //.setLoiteringDelay(1)
-                .build());
     }
 
     /**
@@ -290,22 +251,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void registerGeofences() {
-        if (mGeofenceList.size() > 0) {
-            Log.d(TAG, "creating geofencs");
-            try {
-                LocationServices.GeofencingApi.addGeofences(
-                        mGoogleApiClient,
-                        getGeofencingRequest(),
-                        getGeofencePendingIntent()
-                ).setResultCallback(this);
-            } catch (SecurityException e) {
-                Log.e(TAG, "Could not create geofences");
-                e.printStackTrace();
-            }
-        }
-    }
-
     /**
      * Called when the mGoogleApiClient is connected. This will draw the route on the map once.
      * If the mGoogleApiClient is not connected, the Geofences cannot be created.
@@ -314,23 +259,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.i(TAG, "Connected to the Google API client.");
-        if (!routeDrawn) {
-            drawRoute();
-            saveRouteButton.setVisibility(View.VISIBLE);
-            registerGeofences();
-            routeDrawn = true;
-        }
-    }
-
-    /**
-     * Taken from here: http://tinyurl.com/hkavh6z
-     * @return
-     */
-    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-        builder.addGeofences(mGeofenceList);
-        return builder.build();
     }
 
     @Override
@@ -341,42 +269,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.i(TAG, "Connection failed: this is because of;" + connectionResult.getErrorMessage());
-    }
-
-    /**
-     * Runs when the result of calling addGeofences() and removeGeofences() becomes available.
-     * Either method can complete successfully or with an error.
-     * <p>
-     * Since this activity implements the {@link ResultCallback} interface, we are required to
-     * define this method.
-     *
-     * @param status The Status returned through a PendingIntent when addGeofences() or
-     *               removeGeofences() get called.
-     */
-    public void onResult(Status status) {
-        if (status.isSuccess()) {
-            Log.i(TAG, "Added all the geofences for the user");
-
-        } else {
-            // Get the status code for the error and log it using a user-friendly message.
-            String errorMessage = GeofenceErrorMessages.getErrorString(this,
-                    status.getStatusCode());
-            Log.e(TAG, errorMessage);
-        }
-    }
-
-    /**
-     * Taken from here: http://tinyurl.com/hkavh6z
-     * @return
-     */
-    private PendingIntent getGeofencePendingIntent() {
-        if (mGeofencePendingIntent != null) {
-            return mGeofencePendingIntent;
-        }
-
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-        intent.putExtra("pois", Parcels.wrap(mRoute.pois));
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     /**
