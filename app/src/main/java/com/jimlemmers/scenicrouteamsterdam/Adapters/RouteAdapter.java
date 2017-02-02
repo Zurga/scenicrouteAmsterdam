@@ -1,6 +1,7 @@
 package com.jimlemmers.scenicrouteamsterdam.Adapters;
 
 import android.content.Context;
+import android.nfc.Tag;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -52,6 +53,7 @@ public class RouteAdapter extends ArrayAdapter {
             query.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
+                    Log.e(TAG, dataSnapshot.toString());
                     addRoute(dataSnapshot);
                     RouteAdapter.routes.add(dataSnapshot.getValue(Route.class));
                 }
@@ -133,8 +135,10 @@ public class RouteAdapter extends ArrayAdapter {
             @Override
             public void onClick(View v) {
                 Route route = (Route) v.getTag();
+                Log.d(TAG, mContext.getPackageName());
+
                 new RouteGetter(route.from, route.fromName, route.to, route.toName,
-                        route.cycling, route.timesUsed, route.key, "", routeListener);
+                        route.cycling, route.timesUsed, route.key, route.routeJSON, routeListener);
             }
         });
 
