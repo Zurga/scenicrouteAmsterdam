@@ -151,10 +151,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * @param key Firebase object key.
      */
     public void updateRoute(String key){
-        DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE)
-                .child(user.getUid());
+        Log.e(TAG, "updating route");
+        DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE);
         mRoute.timesUsed += 1;
-        myRef.child(key).setValue(mRoute);
+        myRef.child(user.getUid()).child(key).setValue(mRoute);
     }
 
     /**
@@ -165,8 +165,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, mRoute.key);
             updateRoute(mRoute.key);
         } else {
-            DatabaseReference reference = database.getReference(Constants.FIREBASE_ROUTE)
-                    .child(user.getUid());
+            DatabaseReference reference = database.getReference(Constants.FIREBASE_ROUTE);
             saveRoute(reference);
         }
     }
@@ -381,6 +380,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Map<String, Object> child = new HashMap<>();
         mRoute.key = key;
         child.put("/" + key, mRoute);
-        reference.updateChildren(child);
+        reference.child(user.getUid()).updateChildren(child);
     }
 }
