@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.v7.app.NotificationCompat;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
@@ -17,17 +16,23 @@ import com.google.android.gms.location.GeofencingEvent;
 import com.jimlemmers.scenicrouteamsterdam.Activities.InformationActivity;
 import com.jimlemmers.scenicrouteamsterdam.Activities.MapsActivity;
 import com.jimlemmers.scenicrouteamsterdam.Classes.GeofenceErrorMessages;
+import com.jimlemmers.scenicrouteamsterdam.Models.POI;
 import com.jimlemmers.scenicrouteamsterdam.R;
+
+import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by jim on 1/27/17.
+ * This is taken from: https://github.com/googlesamples/android-play-location/
+ * and adapted to accommodate a list of POIs which contains the data to add to the notification.
  */
 
 public class GeofenceTransitionsIntentService extends IntentService {
     protected static final String TAG = "GeofenceTransitionsIS";
+    private ArrayList<POI> pois;
 
     public GeofenceTransitionsIntentService() {
         // Use the TAG to name the worker thread.
@@ -42,6 +47,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        pois = (ArrayList<POI>) Parcels.unwrap(intent.getParcelableExtra("pois"));
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
             String errorMessage = GeofenceErrorMessages.getErrorString(this,
@@ -56,22 +62,25 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
         // Test that the reported transition was of interest.
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT ||
+                geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
 
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
             List triggeringGeofences = geofencingEvent.getTriggeringGeofences();
 
             // Get the transition details as a String.
-            String geofenceTransitionDetails = getGeofenceTransitionDetails(
+            ArrayList<POI> geofenceTransitionDetails = getGeofenceTransitionDetails(
                     this,
                     geofenceTransition,
                     triggeringGeofences
             );
 
             // Send notification and log the transition details.
-            sendNotification(geofenceTransitionDetails);
-            Log.i(TAG, geofenceTransitionDetails);
+            for (POI poi : geofenceTransitionDetails) {
+                sendNotification(poi);
+            }
+            Log.i(TAG, geofenceTransitionDetails.toString());
         } else {
             // Log the error.
             Log.e(TAG, getString(R.string.geofence_transition_invalid_type,
@@ -79,7 +88,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
         }
     }
 
-    private String getGeofenceTransitionDetails(
+    private ArrayList<POI> getGeofenceTransitionDetails(
             Context context,
             int geofenceTransition,
             List<Geofence> triggeringGeofences) {
@@ -87,19 +96,19 @@ public class GeofenceTransitionsIntentService extends IntentService {
         String geofenceTransitionString = getTransitionString(geofenceTransition);
 
         // Get the Ids of each geofence that was triggered.
-        ArrayList triggeringGeofencesIdsList = new ArrayList();
+        ArrayList triggeringGeofencesPOIsList= new ArrayList();
         for (Geofence geofence : triggeringGeofences) {
-            triggeringGeofencesIdsList.add(geofence.getRequestId());
+            int id = Integer.valueOf(geofence.getRequestId());
+            triggeringGeofencesPOIsList.add(pois.get(id));
         }
-        String triggeringGeofencesIdsString = TextUtils.join(", ",  triggeringGeofencesIdsList);
 
-        return geofenceTransitionString + ": " + triggeringGeofencesIdsString;
+        return triggeringGeofencesPOIsList;
     }
 
-    private void sendNotification(String notificationDetails) {
+    private void sendNotification(POI poi) {
         // Create an explicit content Intent that starts the main Activity.
         Intent notificationIntent = new Intent(getApplicationContext(), InformationActivity.class);
-
+        notificationIntent.putExtra("poi", Parcels.wrap(poi));
         // Construct a task stack.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
@@ -123,8 +132,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(),
                         R.drawable.marker))
                 .setColor(Color.RED)
-                .setContentTitle(notificationDetails)
-                .setContentText("You are close to a point of interest.")
+                .setContentTitle("You are close to a point of interest.")
+                .setContentText(poi.name)
                 .setContentIntent(notificationPendingIntent);
 
         // Dismiss notification once the user touches it.
