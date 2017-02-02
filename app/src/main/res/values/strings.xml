@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Scenic Route Amsterdam</string>
+    <string name="app_name">Scenic Route</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_main">Scenic Route Amsterdam</string>
     <string name="location_permission_denied">This application requires the permission to access your location.\\nPlease enable this in the settings.</string>
@@ -91,5 +91,9 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
-    <string name="title_activity_my_routes">MyRoutesActivity</string>
+    <string name="title_activity_my_routes">Saved routes</string>
+    <string name="MainActivityShowCaseText">Your most used addresses are in here, single click to use long press to select an
+        address and use the delete button to delete them.</string>
+    <string name="MainActivityShowCaseTitle">Most used addresses.</string>
+    <string name="checkInternet">Please check your internet connection.</string>
 </resources>
