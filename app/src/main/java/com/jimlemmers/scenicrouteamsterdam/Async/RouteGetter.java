@@ -5,64 +5,76 @@ import android.util.Log;
 
 import com.goebl.david.Response;
 import com.goebl.david.Webb;
-import com.google.firebase.database.Exclude;
 
 import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
-import com.jimlemmers.scenicrouteamsterdam.Classes.POI;
-import com.jimlemmers.scenicrouteamsterdam.Classes.Point;
-import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
-import com.jimlemmers.scenicrouteamsterdam.Interfaces.OnTaskCompleted;
+import com.jimlemmers.scenicrouteamsterdam.Models.Route;
+import com.jimlemmers.scenicrouteamsterdam.Interfaces.RouteReceived;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-
-import static java.lang.Thread.sleep;
 
 /**
  * Created by jim on 1/24/17.
+ * This will get a route from the server and call the onRouteReceived function in the calling
+ * activity giving back a Route object.
  */
 
 public class RouteGetter extends AsyncTask<String, String, String> {
     private URL server_url;
     private String TAG = "Route";
-    private OnTaskCompleted mListener;
-    public String mTo;
+    private RouteReceived mListener;
     public String mFrom;
-    public String mToName;
-    public String mFromName;
+    public String mFromAddress;
+    public String mTo;
+    public String mToAddress;
     public Boolean mCycling;
     public int mTimesUsed;
     public String key;
     public Route route;
 
-    public RouteGetter(String toInput, String toString, String fromInput, String fromString,
-                       Boolean cyclingInput, OnTaskCompleted listener){
-       this(toInput, toString, fromInput, fromString, cyclingInput, 0, null, "", listener);
+    /**
+     * Constructor for the MainActivity where a route is created from just the basic information.
+     * @param fromLatLng
+     * @param fromString
+     * @param toLatLng
+     * @param toString
+     * @param cyclingInput
+     * @param listener
+     */
+    public RouteGetter(String fromLatLng, String fromString, String toLatLng, String toString,
+                       Boolean cyclingInput, RouteReceived listener){
+       this(fromLatLng, fromString, toLatLng, toString, cyclingInput, 0, null, "", listener);
     }
 
-    public RouteGetter(String toInput, String toString, String fromInput, String fromString,
-                       Boolean cyclingInput, String pointsJson, OnTaskCompleted listener) {
-        this(toInput, toString, fromInput, fromString, cyclingInput, 0, null, pointsJson, listener);
-    }
-    public RouteGetter(String toInput, String toString, String fromInput, String fromString,
+    /**
+     * The constructor which is called when a new route is created from the most used address pairs.
+     * @param fromLatLng
+     * @param fromString
+     * @param toLatLng
+     * @param toString
+     * @param cyclingInput
+     * @param timesUsed
+     * @param key
+     * @param pointsJson
+     * @param listener
+     */
+    public RouteGetter(String fromLatLng, String fromString, String toLatLng, String toString,
                        Boolean cyclingInput, int timesUsed, String key, String pointsJson,
-                       OnTaskCompleted listener) {
+                       RouteReceived listener) {
         mListener = listener;
         try {
             server_url = new URL(Constants.SERVER_URL);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        if (toInput != "" & fromInput != ""){
-            mTo = toInput;
-            mToName = toString;
-            mFrom = fromInput;
-            mFromName = fromString;
+        if (toLatLng != "" & fromLatLng != ""){
+            mFrom = fromLatLng;
+            mFromAddress = fromString;
+            mTo = toLatLng;
+            mToAddress = toString;
             mCycling = cyclingInput;
             mTimesUsed = timesUsed;
             this.key = key;
@@ -70,52 +82,39 @@ public class RouteGetter extends AsyncTask<String, String, String> {
         if (pointsJson == "") {
             this.execute();
         } else {
-            route = new Route(mFrom, mFromName, mTo, mToName, mCycling, mTimesUsed, "", pointsJson);
+            route = new Route(mFrom, mFromAddress, mTo, mToAddress, mCycling, mTimesUsed, key, pointsJson);
+            mListener.onRouteReceived(route);
         }
-    }
-    @Override
-    @Exclude
-    protected void onPostExecute(String result) {
-        if (result != null) {
-            route = new Route(mFrom, mFromName, mTo, mToName, mCycling, mTimesUsed, key, result);
-        }
-        mListener.onTaskCompleted(route);
     }
 
-    @Exclude
-    private ArrayList<Object> instantiateFromJSON(JSONArray array, String type) {
-        ArrayList<Object> resultArray = new ArrayList<>();
-        try {
-            if (array != null) {
-                for (int i = 0; i < array.length(); i++) {
-                    JSONObject pointJSON = (JSONObject) array.get(i);
-                    switch (type) {
-                        case "point": resultArray.add(new Point(pointJSON.toString()));
-                            break;
-
-                        case "poi": resultArray.add(new POI(pointJSON.toString()));
-                            break;
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        return resultArray;
-    }
-    /*
-     * Taken from here:https://developer.android.com/training/basics/network-ops/connecting.html
+    /**
+     * Create the Route object and calls the listener on the parent activity.
+     * @param result
      */
     @Override
-    @Exclude
+    protected void onPostExecute(String result) {
+        if (result != null) {
+            route = new Route(mFrom, mFromAddress, mTo, mToAddress, mCycling, mTimesUsed, key, result);
+        }
+        mListener.onRouteReceived(route);
+    }
+
+    /**
+     * Creates a connection to the server and get the json needed to create a Route.
+     * For testing purposes, a default route is used when the server is not reachable.
+     * The code used is taken from here: https://github.com/hgoebl/DavidWebb
+     * @param params
+     * @return
+     */
+    @Override
     protected String doInBackground(String[] params) {
         JSONObject apiResult = null;
         try {
             Webb webb = Webb.create();
             Response<JSONObject> response = webb
                     .post(Constants.SERVER_URL)
-                    .param("to", mTo)
-                    .param("from", mFrom)
+                    .param("to", mTo.toString())
+                    .param("from", mFrom.toString())
                     .param("cycling", mCycling.toString())
                     .ensureSuccess()
                     .asJsonObject();
