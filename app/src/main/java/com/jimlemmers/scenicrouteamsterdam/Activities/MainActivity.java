@@ -20,7 +20,6 @@ import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.jimlemmers.scenicrouteamsterdam.Adapters.RouteAdapter;
 import com.jimlemmers.scenicrouteamsterdam.Async.RouteGetter;
 import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
@@ -36,6 +35,7 @@ import java.util.HashMap;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "Mainactivity";
+    private DatabaseReference mRef;
     private HashMap<Integer, Place> fromTo = new HashMap<>(); //This is used to avoid duplicate code.
 
     @Override
@@ -62,9 +62,12 @@ public class MainActivity extends BaseActivity {
             editor.putBoolean("firstTime", false);
             editor.apply();
         }
-
+        mRefString = Constants.FIREBASE_ROUTE;
         addAutocompleteListeners();
+        setPreviewButtonListener();
+    }
 
+    public void setPreviewButtonListener(){
         Button previewButton = (Button) findViewById(R.id.preview_route_button);
         final Switch transportSwitch = (Switch) findViewById(R.id.transport_mode);
 
@@ -98,8 +101,8 @@ public class MainActivity extends BaseActivity {
     public void onStart() {
         super.onStart();
         if (user != null) {
-            DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE).child(getUid());
-            adapter = new RouteAdapter(this, new ArrayList<Route>(), myRef, this, this);
+            mRef = database.getReference(mRefString).child(getUid());
+            adapter = new RouteAdapter(this, new ArrayList<Route>(), mRef, this, this);
             ListView listView = (ListView) findViewById(R.id.route_list);
             listView.setAdapter(adapter);
         } else {
