@@ -1,9 +1,6 @@
 package com.jimlemmers.scenicrouteamsterdam.Adapters;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,14 +15,14 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
-import com.jimlemmers.scenicrouteamsterdam.Activities.MapsActivity;
-import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
+import com.jimlemmers.scenicrouteamsterdam.Async.RouteGetter;
+import com.jimlemmers.scenicrouteamsterdam.Models.Route;
+import com.jimlemmers.scenicrouteamsterdam.Interfaces.RouteReceived;
 import com.jimlemmers.scenicrouteamsterdam.Interfaces.RouteItemSelected;
 import com.jimlemmers.scenicrouteamsterdam.R;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * Created by jim on 1/24/17.
@@ -34,36 +31,34 @@ import java.util.List;
 public class RouteAdapter extends ArrayAdapter {
     private String TAG = "RouteAdapter";
     public Context mContext;
-    private RouteItemSelected mListener;
-    private FirebaseAuth mAuth;
-    private FirebaseUser user;
+    public RouteItemSelected mListener;
+    public RouteReceived routeListener;
+    static public ArrayList<Route> routes = new ArrayList<>();
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private FirebaseUser user = mAuth.getCurrentUser();
     private DatabaseReference mDatabase;
-    private List<String> routeIds = new ArrayList<>();
-    //private List<Route> routes = new ArrayList<>();
 
     public RouteAdapter(Context context, ArrayList<Route> routes, DatabaseReference ref,
-                        RouteItemSelected listener) {
+                        RouteItemSelected listener, RouteReceived routeListener) {
         super(context, 0, routes);
         mContext = context;
         mDatabase = ref;
 
         mListener = listener;
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
+        this.routeListener = routeListener;
+
         if (user != null) {
             Query query = mDatabase.orderByChild("mostUsed").limitToFirst(10);
-            Log.d("USER IN FAVORITES", user.getUid());
             query.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-                    Log.d("Added", dataSnapshot.getKey());
-                    addMostUsed(dataSnapshot);
+                    addRoute(dataSnapshot);
+                    RouteAdapter.routes.add(dataSnapshot.getValue(Route.class));
                 }
 
                 @Override
                 public void onChildChanged(DataSnapshot dataSnapshot, String previousChildName) {
-                    Log.d("Changed", dataSnapshot.getKey());
-                    updateMostUsed(dataSnapshot);
+                    updateRoute(dataSnapshot);
                 }
 
                 @Override
@@ -73,7 +68,7 @@ public class RouteAdapter extends ArrayAdapter {
 
                 @Override
                 public void onChildRemoved(DataSnapshot dataSnapshot) {
-                    removeMostUsed(dataSnapshot);
+                    removeRoute(dataSnapshot.getKey());
                 }
 
                 @Override
@@ -84,8 +79,7 @@ public class RouteAdapter extends ArrayAdapter {
         }
     }
 
-    public void addMostUsed(DataSnapshot dataSnapshot) {
-        Log.d(TAG, dataSnapshot.getValue().toString());
+    public void addRoute(DataSnapshot dataSnapshot) {
         Route route = dataSnapshot.getValue(Route.class);
         /*
         route.key = dataSnapshot.getKey();
@@ -99,20 +93,15 @@ public class RouteAdapter extends ArrayAdapter {
         notifyDataSetChanged();
     }
 
-    public void updateMostUsed(DataSnapshot dataSnapshot) {
-        for (int i = 0; i < this.getCount(); i++) {
-            Route route = (Route) this.getItem(i);
-            if (route.key == dataSnapshot.getKey()) {
-                this.remove(route);
-            }
-        }
-        addMostUsed(dataSnapshot);
+    public void updateRoute(DataSnapshot dataSnapshot) {
+        removeRoute(dataSnapshot.getKey());
+        addRoute(dataSnapshot);
     }
 
-    public void removeMostUsed(DataSnapshot dataSnapshot){
+    public void removeRoute(String key){
         for (int i = 0; i < this.getCount(); i++) {
             Route route = (Route) this.getItem(i);
-            if (route.key == dataSnapshot.getKey())
+            if (route.key == key)
                 this.remove(route);
         }
         notifyDataSetChanged();
@@ -144,9 +133,8 @@ public class RouteAdapter extends ArrayAdapter {
             @Override
             public void onClick(View v) {
                 Route route = (Route) v.getTag();
-                Intent intent = new Intent(getContext(), MapsActivity.class);
-                intent.putExtra("key", route.key);
-                mContext.startActivity(intent);
+                new RouteGetter(route.from, route.fromName, route.to, route.toName,
+                        route.cycling, route.timesUsed, route.key, "", routeListener);
             }
         });
 
@@ -162,5 +150,4 @@ public class RouteAdapter extends ArrayAdapter {
 
         return convertView;
     }
-
 }

@@ -23,6 +23,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.jimlemmers.scenicrouteamsterdam.Adapters.RouteAdapter;
 import com.jimlemmers.scenicrouteamsterdam.Async.RouteGetter;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
 import com.jimlemmers.scenicrouteamsterdam.Models.Route;
 import com.jimlemmers.scenicrouteamsterdam.R;
 
@@ -97,8 +98,7 @@ public class MainActivity extends BaseActivity {
     public void onStart() {
         super.onStart();
         if (user != null) {
-            DatabaseReference myRef = database.getReference()
-                    .child("routes").child(getUid());
+            DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE).child(getUid());
             adapter = new RouteAdapter(this, new ArrayList<Route>(), myRef, this, this);
             ListView listView = (ListView) findViewById(R.id.route_list);
             listView.setAdapter(adapter);
