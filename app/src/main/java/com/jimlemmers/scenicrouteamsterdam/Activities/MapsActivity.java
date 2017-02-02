@@ -170,6 +170,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         if (mRoute.points.size() < 2) {
+            Toast.makeText(this, "Could not show you the route, perhaps the server is down",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
