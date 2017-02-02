@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -36,29 +35,31 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+
 import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
 import com.jimlemmers.scenicrouteamsterdam.Classes.GeofenceErrorMessages;
-import com.jimlemmers.scenicrouteamsterdam.Interfaces.OnTaskCompleted;
-import com.jimlemmers.scenicrouteamsterdam.Classes.POI;
+import com.jimlemmers.scenicrouteamsterdam.Models.POI;
 import com.jimlemmers.scenicrouteamsterdam.Services.GeofenceTransitionsIntentService;
 import com.jimlemmers.scenicrouteamsterdam.Utils.PermissionUtils;
-import com.jimlemmers.scenicrouteamsterdam.Classes.Point;
+import com.jimlemmers.scenicrouteamsterdam.Models.Point;
 import com.jimlemmers.scenicrouteamsterdam.R;
-import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
-import com.jimlemmers.scenicrouteamsterdam.Async.RouteGetter;
+import com.jimlemmers.scenicrouteamsterdam.Models.Route;
+
+import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This activity will display the map and the route to the user. The geofences are also created in
+ * this activity. It receives a route to display from the calling activity.
+ */
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
-        GoogleMap.OnInfoWindowClickListener, OnTaskCompleted,
+        GoogleMap.OnInfoWindowClickListener,
         ActivityCompat.OnRequestPermissionsResultCallback,
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         ResultCallback<Status> {
@@ -66,33 +67,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String TAG = "MapsActivity";
     private GoogleMap mMap;
     private Route mRoute;
-    private boolean cycling;
-    private boolean preview;
+    private ArrayList<Route> routes = new ArrayList<>();
     private GoogleApiClient mGoogleApiClient;
     private ArrayList<Geofence> mGeofenceList = new ArrayList<>();
     private PendingIntent mGeofencePendingIntent;
-    private String from;
-    private String to;
-    private String fromName;
-    private String toName;
-    private String routeKey;
-    private String points;
-    private int used;
     private Button saveRouteButton;
     private FirebaseUser user;
     private FirebaseDatabase database;
-    private boolean apiConnected = false;
 
     // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean mPermissionDenied = false;
-
-    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-        builder.addGeofences(mGeofenceList);
-        return builder.build();
-    }
+    private boolean routeDrawn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,40 +94,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         buildGoogleApiClient();
 
         Intent intent = getIntent();
-        from = intent.getExtras().getString("from");
-        fromName = intent.getExtras().getString("fromName");
-        to = intent.getExtras().getString("to");
-        toName = intent.getExtras().getString("toName");
-        cycling = intent.getExtras().getBoolean("cycling", true);
-        routeKey = intent.getExtras().getString("key");
-        used = intent.getExtras().getInt("used");
-        points = intent.getExtras().getString("points");
+        mRoute = Parcels.unwrap(intent.getParcelableExtra("route"));
+        routes = Parcels.unwrap(intent.getParcelableExtra("routes"));
+
         user = FirebaseAuth.getInstance().getCurrentUser();
         database = FirebaseDatabase.getInstance();
-
-        if (routeKey == null) {
-            new RouteGetter(from, fromName, to, toName, cycling, this);
-        } else if (points != null && routeKey != null) {
-            new RouteGetter(from, fromName, to, toName, cycling, 0, routeKey, points, this);
-        }
-        else {
-            DatabaseReference myReference = database.getReference()
-                    .child("routes").child(user.getUid()).child(routeKey);
-            myReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Log.d(TAG, dataSnapshot.toString());
-                    Route route = dataSnapshot.getValue(Route.class);
-                    new RouteGetter(route.from, route.fromName, route.to, route.toName,
-                            route.cycling, route.timesUsed, routeKey, "", MapsActivity.this);
-                }
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-        }
-
         saveRouteButton = (Button) findViewById(R.id.save_route);
         saveRouteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -176,9 +133,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(52.350, 4.9), 12));
         enableMyLocation();
 
-        if (mGeofenceList.size() > 0) {
-            getGeofencingRequest();
-        }
+
+        saveOrUpdate();
     }
 
     /**
@@ -192,64 +148,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .build();
     }
 
-    public void updateRoute(){
-        DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE).child(user.getUid());
+    /**
+     * Updates the mostUsed attribute of the route in firebase based on the key provided.
+     * @param key Firebase object key.
+     */
+    public void updateRoute(String key){
+        DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE)
+                .child(user.getUid());
         mRoute.timesUsed += 1;
-        myRef.child(mRoute.key).setValue(mRoute);
+        myRef.child(key).setValue(mRoute);
     }
 
-    public void onTaskCompleted(Route route) {
-        mRoute = route;
-        drawRoute();
-        while (!apiConnected) {
-
-        }
-        saveRouteButton.setVisibility(View.VISIBLE);
-        if (mGeofenceList.size() > 0 ) {
-            try {
-                LocationServices.GeofencingApi.addGeofences(
-                        mGoogleApiClient,
-                        getGeofencingRequest(),
-                        getGeofencePendingIntent()
-                ).setResultCallback(this);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        }
-        Log.d(TAG, mRoute.key + routeKey);
-        saveOrUpdate();
-    }
-
+    /**
+     * Decides whether to save the route to a new object or to update an existing one.
+     */
     public void saveOrUpdate() {
-        if (points != null) {
-            if (mRoute.key != null && routeKey != null) {
-                Log.d(TAG, mRoute.key + routeKey);
-                mRoute.key = routeKey;
-                updateRoute();
-            } else {
-                DatabaseReference reference = database.getReference("routes")
-                        .child(user.getUid());
-                saveRoute(reference);
-            }
+        if (mRoute.key != null) {
+            Log.d(TAG, mRoute.key);
+            updateRoute(mRoute.key);
+        } else {
+            DatabaseReference reference = database.getReference(Constants.FIREBASE_ROUTE)
+                    .child(user.getUid());
+            saveRoute(reference);
         }
     }
 
+    /**
+     * Draws the route from the server on the map, creates the markers for all the points of interest
+     * and adds geofences for these points of interest.
+     */
     public void drawRoute(){
         if (mMap == null) {
             return;
         }
-
-        if (used != 0 ) {
-            mRoute.timesUsed = used;
-        }
-
         if (mRoute.points.size() < 2) {
-            Log.d(TAG, "no points on the mRoute");
             return;
         }
 
         PolylineOptions options = new PolylineOptions();
-
         options.color(Color.parseColor("#CC2222DD"));
         options.width(5);
         options.visible(true);
@@ -273,43 +209,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .title(poi.name));
             //TODO set the name of the POI in the information-box.
             marker.setTag(poi);
-            createGeofence(poi);
+            createGeofence(poi, i);
         }
 
         mMap.addPolyline(options);
     }
 
-    public void createGeofence(POI point) {
+    /**
+     * Creates a geofence around a point of interest
+     * @param point The point of interest to be added.
+     * @param index The index of the POI to determine the data display in the notification.
+     */
+    public void createGeofence(POI point, int index) {
         mGeofenceList.add(new Geofence.Builder()
-                .setRequestId(point.name != null ? point.name: "Test")
+                .setRequestId(String.valueOf(index))
                 .setCircularRegion(
                         point.location.latitude,
                         point.location.longitude,
                         Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Constants.GEOFENCE_TIMEOUT)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                        Geofence.GEOFENCE_TRANSITION_EXIT)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL)
+                .setLoiteringDelay(1)
                 .build());
     }
 
+    /**
+     * A function which allows me to create a custom onclick for the InfoWindow.
+     * @param marker
+     */
     @Override
     public void onInfoWindowClick(Marker marker) {
-        viewPOI((POI) marker.getTag());
-        Log.d(TAG, "clicked a marker");
-    }
-
-    public void viewPOI(POI poi) {
         Intent intent = new Intent(this, InformationActivity.class);
-        if (poi.uri != null) {
-            intent.putExtra("url", poi.uri);
-        } else {
-            String HTML = poi.generateHTML();
-            Log.d(TAG, HTML);
-            intent.putExtra("HTML", HTML);
-        }
+        intent.putExtra("poi", Parcels.wrap(marker.getTag()));
         startActivity(intent);
     }
 
+    /**
+     * Enables the location by asking the user whether he or she would like to.
+     * Taken from here: http://tinyurl.com/j2e5wkr
+     */
     private void enableMyLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -322,6 +260,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * Taken from here http://tinyurl.com/j2e5wkr
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -339,12 +283,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * Called when the mGoogleApiClient is connected. This will draw the route on the map once.
+     * If the mGoogleApiClient is not connected, the Geofences cannot be created.
+     * @param bundle
+     */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        apiConnected = true;
-
         Log.i(TAG, "Connected to the Google API client.");
+        if (!routeDrawn) {
+            drawRoute();
+            saveRouteButton.setVisibility(View.VISIBLE);
+            if (mGeofenceList.size() > 0) {
+                try {
+                    LocationServices.GeofencingApi.addGeofences(
+                            mGoogleApiClient,
+                            getGeofencingRequest(),
+                            getGeofencePendingIntent()
+                    ).setResultCallback(this);
+                } catch (SecurityException e) {
+                    Log.e(TAG, "Could not create geofences");
+                    e.printStackTrace();
+                }
+            }
+            routeDrawn = true;
+        }
+    }
 
+    /**
+     * Taken from here: http://tinyurl.com/hkavh6z
+     * @return
+     */
+    private GeofencingRequest getGeofencingRequest() {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL);
+        builder.addGeofences(mGeofenceList);
+        return builder.build();
     }
 
     @Override
@@ -379,15 +353,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * Taken from here: http://tinyurl.com/hkavh6z
+     * @return
+     */
     private PendingIntent getGeofencePendingIntent() {
         if (mGeofencePendingIntent != null) {
             return mGeofencePendingIntent;
         }
+
         Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        intent.putExtra("pois", Parcels.wrap(mRoute.pois));
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
+    /**
+     * Saves the route, but checks first whether it already exists in the database
+     * @param reference
+     */
     public void saveRoute(DatabaseReference reference) {
+        // Check if the route is already there and do an update instead.
+        for (Route route: routes) {
+            if (route.fromName.equals(mRoute.fromName) && route.toName.equals(mRoute.toName)) {
+                updateRoute(route.key);
+                return;
+            }
+        }
         String key = reference.push().getKey();
         Map<String, Object> child = new HashMap<>();
         mRoute.key = key;
