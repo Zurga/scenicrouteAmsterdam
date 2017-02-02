@@ -1,3 +1,5 @@
 component_depth: 8
+exclude:
+    - /app/src/main/java/com/jimlemmers/scenicrouteamsterdam/Models/Route.java
 languages:
 - java
