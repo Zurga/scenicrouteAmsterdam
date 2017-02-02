@@ -2,51 +2,64 @@ package com.jimlemmers.scenicrouteamsterdam.Activities;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.AutocompleteFilter;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.jimlemmers.scenicrouteamsterdam.Adapters.RouteAdapter;
 import com.jimlemmers.scenicrouteamsterdam.Async.RouteGetter;
-import com.jimlemmers.scenicrouteamsterdam.Classes.Route;
-import com.jimlemmers.scenicrouteamsterdam.Classes.ShowCase;
-import com.jimlemmers.scenicrouteamsterdam.Interfaces.OnTaskCompleted;
-import com.jimlemmers.scenicrouteamsterdam.Interfaces.RouteItemSelected;
+import com.jimlemmers.scenicrouteamsterdam.Models.Route;
 import com.jimlemmers.scenicrouteamsterdam.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
-public class MainActivity extends BaseActivity implements
-        OnConnectionFailedListener, RouteItemSelected, OnTaskCompleted {
+/**
+ * Users can create a new route from here. It also displays a list of most used address pairs.
+ */
+
+public class MainActivity extends BaseActivity {
     private static final String TAG = "Mainactivity";
-    private String[] fromTo = {"", ""};
-    private String[] fromToNames = {"Test", "Tester"};
-    private RouteAdapter routeAdapter;
+    private HashMap<Integer, Place> fromTo = new HashMap<>(); //This is used to avoid duplicate code.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        showCaseTitle = getString(R.string.MainActivityShowCaseTitle);
+        showCaseText = getString(R.string.MainActivityShowCaseText);
+        setupApis();
+
+        fromTo.put(R.id.place_autocomplete_fragment_from, null);
+        fromTo.put(R.id.place_autocomplete_fragment_to, null);
         firstTime = settings.getBoolean("firstTime", true);
 
+        showCaseTarget = new ViewTarget(R.id.route_list, this);
+
         if (firstTime) {
-            ShowCase.activateMainActivityShowcase(this);
+            activateShowcase();
             SharedPreferences.Editor editor = settings.edit();
             editor.putBoolean("firstTime", false);
+            editor.apply();
         }
 
         addAutocompleteListeners();
@@ -57,9 +70,19 @@ public class MainActivity extends BaseActivity implements
         previewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (fromTo[0] != "" & fromTo[1] != "") {
-                    new RouteGetter(fromTo[0], fromTo[1], fromToNames[0], fromToNames[1],
+                Place from = fromTo.get(R.id.place_autocomplete_fragment_from);
+                Place to = fromTo.get(R.id.place_autocomplete_fragment_to);
+
+                if (from != null && to != null) {
+                    String fromLatLng = from.getLatLng().latitude + "," +
+                            from.getLatLng().longitude;
+                    String toLatLng = to.getLatLng().latitude + "," +
+                            to.getLatLng().longitude;
+
+                    new RouteGetter(fromLatLng, from.getName().toString(),
+                            toLatLng, to.getName().toString(),
                             transportSwitch.isChecked(), MainActivity.this);
+                    showProgressDialog();
                 } else {
                     Toast errorToast = Toast.makeText(getApplicationContext(),
                             "Please enter a start and end location",
@@ -73,50 +96,40 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        DatabaseReference myRef = FirebaseDatabase.getInstance().getReference()
-                .child("routes").child(user.getUid());
-        routeAdapter = new RouteAdapter(this, new ArrayList<Route>(), myRef, this, this);
-        ListView listView = (ListView) findViewById(R.id.my_routes);
-        listView.setAdapter(routeAdapter);
-    }
-
-
-    public void deleteFromMostUsed(){
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            DatabaseReference myRef = FirebaseDatabase.getInstance().getReference()
-                .child("routes").child(user.getUid());
-            for (String key: itemsSelected) {
-                myRef.child(key).removeValue();
-            }
+            DatabaseReference myRef = database.getReference()
+                    .child("routes").child(getUid());
+            adapter = new RouteAdapter(this, new ArrayList<Route>(), myRef, this, this);
+            ListView listView = (ListView) findViewById(R.id.route_list);
+            listView.setAdapter(adapter);
+        } else {
+            signInAnonymously();
         }
-        itemsSelected.clear();
     }
 
     private void addAutocompleteListeners() {
-        int[] address_fields = {R.id.place_autocomplete_fragment_from,
-                R.id.place_autocomplete_fragment_to};
-
-        for (int i=0; i < address_fields.length; i++) {
+        for (int i : fromTo.keySet()) {
             final int idx = i;
+            AutocompleteFilter typeFilter = new AutocompleteFilter.Builder()
+                    .setCountry("NL")
+                    .build();
             PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
-                    getFragmentManager().findFragmentById(address_fields[i]);
+                    getFragmentManager().findFragmentById(idx);
             autocompleteFragment.setBoundsBias(new LatLngBounds(
                     new LatLng(52.35679, 4.90952),
                     new LatLng(52.40472, 4.75811)
             ));
-
+            autocompleteFragment.setFilter(typeFilter);
+            // Set the text color inside the autocompleteFragment
+            EditText search_input = (EditText) autocompleteFragment.getView()
+                    .findViewById(R.id.place_autocomplete_search_input);
+            search_input.setHintTextColor(0x000000);
             autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
                 @Override
                 public void onPlaceSelected(Place place) {
-                    Log.i(TAG, "Place: " + place.getName());
-                    LatLng location = place.getLatLng();
-                    fromTo[idx] = String.valueOf(location.latitude) + "," +
-                        String.valueOf(location.longitude);
-                    fromToNames[idx] = place.getName().toString();
+                    fromTo.put(idx, place);
+                    Log.d(TAG, String.valueOf(idx) + place.getName());
                 }
-
                 @Override
                 public void onError(Status status) {
                     Log.i(TAG, "An error occurred: " + status);
