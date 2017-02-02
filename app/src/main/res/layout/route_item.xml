@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
     android:background="#AAFFFFFF"
-    android:padding="10dp">
+    android:padding="10dp"
+    android:orientation="vertical"
+    android:layout_height="wrap_content">
 
-    <com.jimlemmers.scenicrouteamsterdam.Classes.FontFitTextView
+    <TextView
         android:text="TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/route_item_from"
         android:layout_weight="1"
         android:textSize="14sp"
-        android:textColor="@color/common_google_signin_btn_text_dark_focused" />
+        android:textColor="@color/colorPrimaryDark" />
 
-    <com.jimlemmers.scenicrouteamsterdam.Classes.FontFitTextView
+    <TextView
         android:text="TextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/route_item_to"
         android:layout_weight="1"
         android:textSize="14sp"
-        android:textAlignment=""
-        android:textColor="@color/common_google_signin_btn_text_dark_focused" />
+        android:textColor="@color/colorAccent" />
 </LinearLayout>
