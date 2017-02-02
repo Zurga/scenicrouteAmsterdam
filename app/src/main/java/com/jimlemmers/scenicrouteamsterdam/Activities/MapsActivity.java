@@ -74,6 +74,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button saveRouteButton;
     private FirebaseUser user;
     private FirebaseDatabase database;
+    private DatabaseReference mRef;
 
     // Location and Geofencing related variables.
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -92,20 +93,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mGeofencePendingIntent = null;
 
         buildGoogleApiClient();
+        user = FirebaseAuth.getInstance().getCurrentUser();
+        database = FirebaseDatabase.getInstance();
 
         Intent intent = getIntent();
         mRoute = Parcels.unwrap(intent.getParcelableExtra("route"));
         routes = Parcels.unwrap(intent.getParcelableExtra("routes"));
+        mRef = database.getReference(intent.getStringExtra("reference")).child(user.getUid());
 
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        database = FirebaseDatabase.getInstance();
         saveRouteButton = (Button) findViewById(R.id.save_route);
         saveRouteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DatabaseReference reference = database.getReference("my_routes")
                         .child(user.getUid());
-                saveRoute(reference);
+                String key = reference.push().getKey();
+                Map<String, Object> child = new HashMap<>();
+                mRoute.key = key;
+                child.put("/" + key, mRoute);
+                reference.updateChildren(child);
                 Toast.makeText(MapsActivity.this, "Route saved!",
                         Toast.LENGTH_SHORT).show();
             }
@@ -121,6 +127,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onStop() {
         super.onStop();
+        LocationServices.GeofencingApi.removeGeofences(
+                mGoogleApiClient,
+                // This is the same pending intent that was used in addGeofences().
+                getGeofencePendingIntent()
+        ).setResultCallback(this); // Result processed in onResult().
         mGoogleApiClient.disconnect();
     }
 
@@ -151,10 +162,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * @param key Firebase object key.
      */
     public void updateRoute(String key){
-        Log.e(TAG, "updating route");
-        DatabaseReference myRef = database.getReference(Constants.FIREBASE_ROUTE);
+        Log.e(TAG, "updating route" + key);
         mRoute.timesUsed += 1;
-        myRef.child(user.getUid()).child(key).setValue(mRoute);
+        mRef.child(key).setValue(mRoute);
     }
 
     /**
@@ -165,8 +175,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, mRoute.key);
             updateRoute(mRoute.key);
         } else {
-            DatabaseReference reference = database.getReference(Constants.FIREBASE_ROUTE);
-            saveRoute(reference);
+            saveRoute(mRef);
         }
     }
 
@@ -225,8 +234,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         point.location.longitude,
                         Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Constants.GEOFENCE_TIMEOUT)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_DWELL)
-                .setLoiteringDelay(1)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                        Geofence.GEOFENCE_TRANSITION_EXIT)
+                //.setLoiteringDelay(1)
                 .build());
     }
 
@@ -280,6 +290,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    public void registerGeofences() {
+        if (mGeofenceList.size() > 0) {
+            Log.d(TAG, "creating geofencs");
+            try {
+                LocationServices.GeofencingApi.addGeofences(
+                        mGoogleApiClient,
+                        getGeofencingRequest(),
+                        getGeofencePendingIntent()
+                ).setResultCallback(this);
+            } catch (SecurityException e) {
+                Log.e(TAG, "Could not create geofences");
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * Called when the mGoogleApiClient is connected. This will draw the route on the map once.
      * If the mGoogleApiClient is not connected, the Geofences cannot be created.
@@ -291,18 +317,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (!routeDrawn) {
             drawRoute();
             saveRouteButton.setVisibility(View.VISIBLE);
-            if (mGeofenceList.size() > 0) {
-                try {
-                    LocationServices.GeofencingApi.addGeofences(
-                            mGoogleApiClient,
-                            getGeofencingRequest(),
-                            getGeofencePendingIntent()
-                    ).setResultCallback(this);
-                } catch (SecurityException e) {
-                    Log.e(TAG, "Could not create geofences");
-                    e.printStackTrace();
-                }
-            }
+            registerGeofences();
             routeDrawn = true;
         }
     }
@@ -313,7 +328,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL);
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
     }
@@ -380,6 +395,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Map<String, Object> child = new HashMap<>();
         mRoute.key = key;
         child.put("/" + key, mRoute);
-        reference.child(user.getUid()).updateChildren(child);
+        reference.updateChildren(child);
     }
 }
