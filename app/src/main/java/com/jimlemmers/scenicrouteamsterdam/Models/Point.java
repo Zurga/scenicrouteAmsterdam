@@ -6,6 +6,7 @@ import org.parceler.Parcel;
 
 /**
  * Created by jim on 1/19/17.
+ * Base class for points on the map.
  */
 @Parcel
 public class Point {
