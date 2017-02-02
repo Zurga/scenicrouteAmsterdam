@@ -4,6 +4,7 @@ import org.parceler.Parcel;
 
 /**
  * Created by jim on 1/24/17.
+ * Needed because the LatLng class cannot be sent to Firebase and back.
  */
 
 @Parcel
