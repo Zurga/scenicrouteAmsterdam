@@ -124,7 +124,7 @@ public class RouteGetter extends AsyncTask<String, String, String> {
         }
         catch (Exception a) {
             try {
-                apiResult = new JSONObject(Constants.TEST_ROUTE);
+                apiResult = new JSONObject("{'route':[], 'pois':[]}");
             }
             catch (JSONException e) {
                 e.printStackTrace();
