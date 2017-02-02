@@ -34,10 +34,6 @@
             android:label="@string/title_activity_maps">
             MapsActivity
         </activity>
-        <service
-            android:name=".Services.GeofenceTransitionsIntentService"
-            android:exported="false" >
-        </service>
         <activity android:name=".Activities.InformationActivity">
             InformationActivity
         </activity>
