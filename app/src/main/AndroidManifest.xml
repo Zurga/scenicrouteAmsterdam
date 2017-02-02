@@ -30,16 +30,6 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".Activities.MainActivity"
-            android:label="@string/title_activity_main"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".Activities.MapsActivity"
             android:label="@string/title_activity_maps">
             MapsActivity
@@ -47,6 +37,13 @@
         <activity android:name=".Activities.InformationActivity">
             InformationActivity
         </activity>
+        <activity android:name=".Activities.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+       </activity>
         <activity
             android:name=".Activities.MyRoutesActivity"
             android:label="@string/title_activity_my_routes"
