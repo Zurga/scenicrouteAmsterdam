@@ -15,7 +15,7 @@
     android:background="#99FFFFFF">
 
     <fragment
-        android:id="@+id/place_autocomplete_fragment_to"
+        android:id="@+id/place_autocomplete_fragment_from"
         android:layout_height="wrap_content"
         android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
         android:layout_width="match_parent"
@@ -30,12 +30,12 @@
         android:id="@+id/textView2"
         android:textSize="30sp"
         android:textColor="?android:attr/textColorPrimary"
-        android:layout_below="@+id/place_autocomplete_fragment_to"
+        android:layout_below="@+id/place_autocomplete_fragment_from"
         android:layout_alignLeft="@+id/textView"
         android:layout_alignStart="@+id/textView" />
 
     <fragment
-        android:id="@+id/place_autocomplete_fragment_from"
+        android:id="@+id/place_autocomplete_fragment_to"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
@@ -48,7 +48,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/transport_mode"
-        android:layout_below="@+id/place_autocomplete_fragment_from"
+        android:layout_below="@+id/place_autocomplete_fragment_to"
         android:layout_toLeftOf="@+id/walking_text"
         android:layout_toStartOf="@+id/walking_text" />
 
@@ -84,7 +84,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/preview_route_button"
         android:layout_marginTop="37dp"
-        android:layout_below="@+id/place_autocomplete_fragment_from"
+        android:layout_below="@+id/place_autocomplete_fragment_to"
         android:layout_centerHorizontal="true"
         android:elevation="0dp" />
 
@@ -99,7 +99,7 @@
 
     <ListView
         android:layout_width="match_parent"
-        android:id="@+id/my_routes"
+        android:id="@+id/route_list"
         android:layout_height="240dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
