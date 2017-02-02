@@ -110,6 +110,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    /**
+     * Adds all the autoComplete listeners for the From and To places fragments.
+     */
     private void addAutocompleteListeners() {
         for (int i : fromTo.keySet()) {
             final int idx = i;
