@@ -6,6 +6,7 @@ import android.widget.ListView;
 
 import com.google.firebase.database.DatabaseReference;
 import com.jimlemmers.scenicrouteamsterdam.Adapters.RouteAdapter;
+import com.jimlemmers.scenicrouteamsterdam.Classes.Constants;
 import com.jimlemmers.scenicrouteamsterdam.R;
 import com.jimlemmers.scenicrouteamsterdam.Models.Route;
 
@@ -25,7 +26,7 @@ public class MyRoutesActivity extends BaseActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setupApis();
-        mRefString = "my_routes";
+        mRefString = Constants.FIREBASE_SAVED_ROUTES;
         mRef = database.getReference(mRefString).child(getUid());
         adapter = new RouteAdapter(MyRoutesActivity.this, new ArrayList<Route>(),
                 mRef, this, this);
