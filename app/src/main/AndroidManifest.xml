@@ -34,6 +34,10 @@
             android:label="@string/title_activity_maps">
             MapsActivity
         </activity>
+        <service
+            android:name=".Services.GeofenceTransitionsIntentService"
+            android:exported="false" >
+        </service>
         <activity android:name=".Activities.InformationActivity">
             InformationActivity
         </activity>
@@ -48,9 +52,6 @@
             android:name=".Activities.MyRoutesActivity"
             android:label="@string/title_activity_my_routes"
             android:theme="@style/AppTheme.NoActionBar"></activity>
-        <service
-            android:name=".Services.GeofenceTransitionsIntentService"
-            android:exported="true" >
-        </service>
+
     </application>
 </manifest>
