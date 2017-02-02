@@ -3,6 +3,7 @@ package com.jimlemmers.scenicrouteamsterdam.Activities;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.widget.ListView;
+
 import com.google.firebase.database.DatabaseReference;
 import com.jimlemmers.scenicrouteamsterdam.Adapters.RouteAdapter;
 import com.jimlemmers.scenicrouteamsterdam.R;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 
 public class MyRoutesActivity extends BaseActivity {
     public String TAG = "MyRoutesActivity";
-
+    private DatabaseReference mRef;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,12 +25,11 @@ public class MyRoutesActivity extends BaseActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setupApis();
-        if (user != null) {
-            DatabaseReference myRef = database.getReference("my_routes").child(getUid());
-            adapter = new RouteAdapter(MyRoutesActivity.this, new ArrayList<Route>(),
-                    myRef, this, this);
-            ListView listView = (ListView) findViewById(R.id.route_list);
-            listView.setAdapter(adapter);
-        }
+        mRefString = "my_routes";
+        mRef = database.getReference(mRefString).child(getUid());
+        adapter = new RouteAdapter(MyRoutesActivity.this, new ArrayList<Route>(),
+                mRef, this, this);
+        ListView listView = (ListView) findViewById(R.id.route_list);
+        listView.setAdapter(adapter);
     }
 }
